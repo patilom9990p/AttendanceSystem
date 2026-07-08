@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Dashboard</title>
+
+<link rel="icon" type="image/png" href="images/logo.png">
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header class="app-header">
+
+    <div class="header-overlay"></div>
+
+    <div class="header-content">
+
+        <img src="images/logo.png" class="logo">
+
+        <div class="company-text">
+
+            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+
+            <p>Office Attendance Management System</p>
+
+        </div>
+
+    </div>
+
+</header>
+
+<div class="container">
+
+    <h2>📊 Monthly Attendance Report</h2>
+
+    <br>
+
+    <label>Select Month</label>
+
+    <br><br>
+
+    <input type="month" id="monthPicker">
+
+    <br><br>
+
+    <button id="loadBtn">
+
+        View Report
+
+    </button>
+
+    <hr>
+
+    <h3 id="workingDays">
+        Total Records : 0
+    </h3>
+
+    <h3 id="presentDays">
+        Present : 0
+    </h3>
+
+    <h3 id="absentDays">
+        Absent : 0
+    </h3>
+
+    <h3 id="attendancePercent">
+        Attendance : 0%
+    </h3>
+
+    <h3 id="averageHours">
+        Average Working Hours : 00:00:00
+    </h3>
+
+    <hr>
+
+    <button onclick="location.href='employeeDashboard.html'">
+
+        ⬅ Back
+
+    </button>
+
+</div>
+
+<script type="module" src="js/monthlyReport.js"></script>
+<footer class="footer">
+
+    <p>
+        © 2026 Version 1.0
+        &nbsp; | &nbsp;
+        Developed by <strong>OM S PATIL</strong>
+    </p>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Dashboard</title>
+
+<link rel="icon" type="image/png" href="images/logo.png">
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header class="app-header">
+
+    <div class="header-overlay"></div>
+
+    <div class="header-content">
+
+        <img src="images/logo.png" class="logo">
+
+        <div class="company-text">
+
+            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+
+            <p>Office Attendance Management System</p>
+
+        </div>
+
+    </div>
+
+</header>
+
+<div class="login-container">
+
+    <!-- Left Panel -->
+
+    <div class="login-left">
+
+        <div class="login-icon">
+            👨‍💼
+        </div>
+
+        <h2>Employee Portal</h2>
+
+        <p>
+            Welcome Back!
+        </p>
+
+        <br><br>
+
+        <div style="text-align:left;line-height:2;font-size:18px;">
+
+            ✅ Daily Attendance<br>
+
+            ✅ Attendance History<br>
+
+            ✅ Change Password<br>
+
+            ✅ Monthly Report
+
+        </div>
+
+    </div>
+
+
+    <!-- Right Panel -->
+
+    <div class="login-right">
+
+        <h2 style="margin-bottom:30px;color:#0B3D91;">
+            Welcome Employee 👋
+        </h2>
+
+        <label>Employee ID</label>
+
+        <input
+            type="text"
+            id="employeeId"
+            placeholder="Enter Employee ID">
+
+        <br><br>
+
+        <label>Password</label>
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter Password">
+
+        <br><br>
+
+        <button
+            id="loginBtn"
+            class="login-btn">
+
+            🔓 Login
+
+        </button>
+
+        <br><br>
+
+        <button
+            onclick="location.href='index.html'"
+            class="back-btn">
+
+            ← Back
+
+        </button>
+
+    </div>
+
+</div>
+
+<script type="module" src="js/employeeLogin.js"></script>
+<footer class="footer">
+
+    <p>
+        © 2026 Version 1.0
+        &nbsp; | &nbsp;
+        Developed by <strong>OM S PATIL</strong>
+    </p>
+
+</footer>
+</body>
+
+</html>

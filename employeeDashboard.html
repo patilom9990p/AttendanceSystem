@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Dashboard</title>
+
+<link rel="icon" type="image/png" href="images/logo.png">
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header class="app-header">
+
+    <div class="header-overlay"></div>
+
+    <div class="header-content">
+
+        <img src="images/logo.png" class="logo">
+
+        <div class="company-text">
+
+            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+
+            <p>Office Attendance Management System</p>
+
+        </div>
+
+    </div>
+
+</header>
+
+<div class="container">
+
+    <h2>👨‍💻 Employee Dashboard</h2>
+
+    <hr>
+
+    <h3 id="empName">Name : --</h3>
+
+    <h3 id="empID">Employee ID : --</h3>
+
+    <h3 id="college">College : --</h3>
+
+    <h3 id="type">Type : --</h3>
+
+    <hr>
+
+    <h3 id="currentDate">Date : --</h3>
+
+    <h3 id="currentTime">Time : --</h3>
+
+    <hr>
+
+    <h3 id="todayCheckIn">
+        Check In : --
+    </h3>
+
+    <h3 id="todayCheckOut">
+        Check Out : --
+    </h3>
+
+    <h3 id="todayWorkingHours">
+        Working Hours : --
+    </h3>
+
+    <br>
+
+    <button id="checkInBtn">
+        🟢 Check In
+    </button>
+
+    <br><br>
+
+    <button id="checkOutBtn" disabled>
+        🔴 Check Out
+    </button>
+
+    <hr>
+
+    <button onclick="location.href='attendanceHistory.html'">
+        📅 Attendance History
+    </button>
+
+    <br><br>
+
+    <button onclick="location.href='changePassword.html'">
+        🔒 Change Password
+    </button>
+
+    <br><br>
+
+  <button onclick="location.href='monthlyReport.html'">
+    📊 Monthly Report
+</button>
+
+    <br><br>
+
+    <button id="logoutBtn">
+        🚪 Logout
+    </button>
+
+</div>
+
+<script type="module" src="js/employeeDashboard.js"></script>
+<footer class="footer">
+
+    <p>
+        © 2026 Version 1.0
+        &nbsp; | &nbsp;
+        Developed by <strong>OM S PATIL</strong>
+    </p>
+
+</footer>
+</body>
+
+</html>

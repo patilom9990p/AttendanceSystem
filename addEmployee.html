@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Dashboard</title>
+
+<link rel="icon" type="image/png" href="images/logo.png">
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+<header class="app-header">
+
+    <div class="header-overlay"></div>
+
+    <div class="header-content">
+
+        <img src="images/logo.png" class="logo">
+
+        <div class="company-text">
+
+            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+
+            <p>Office Attendance Management System</p>
+
+        </div>
+
+    </div>
+
+</header>
+<body>
+
+<div class="container">
+
+    <h1>Add Employee</h1>
+
+    <input type="text" id="name" placeholder="Employee Name">
+
+    <br><br>
+
+    <input type="text" id="college" placeholder="College (Short Form)">
+
+    <br><br>
+
+    <select id="type">
+
+        <option value="">Select Type</option>
+
+        <option>Employee</option>
+
+        <option>Intern</option>
+
+    </select>
+
+    <br><br>
+
+    <button id="saveBtn">
+        Save Employee
+    </button>
+
+    <br><br>
+
+    <button onclick="location.href='admin.html'">
+        Back
+    </button>
+
+</div>
+
+<script type="module" src="js/addEmployee.js"></script>
+<footer class="footer">
+
+    <p>
+        © 2026 Version 1.0
+        &nbsp; | &nbsp;
+        Developed by <strong>OM S PATIL</strong>
+    </p>
+
+</footer>
+</body>
+
+</html>

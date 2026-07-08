@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Dashboard</title>
+
+<link rel="icon" type="image/png" href="images/logo.png">
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header class="app-header">
+
+    <div class="header-overlay"></div>
+
+    <div class="header-content">
+
+        <img src="images/logo.png" class="logo">
+
+        <div class="company-text">
+
+            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+
+            <p>Office Attendance Management System</p>
+
+        </div>
+
+    </div>
+
+</header>
+
+<div class="container">
+
+    <h2>📊 Monthly Attendance Report</h2>
+
+    <hr>
+
+    <label for="monthPicker"><strong>Select Month</strong></label>
+
+    <br><br>
+
+    <input
+        type="month"
+        id="monthPicker"
+    >
+
+    <br><br>
+
+    <button id="loadBtn">
+        📊 Load Report
+    </button>
+<br><br>
+
+<button id="exportCSVBtn">
+    📥 Export CSV
+</button>
+    <hr>
+
+    <div class="table-container">
+
+        <table id="monthlyReportTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Present Days</th>
+                    <th>Absent Days</th>
+                    <th>Attendance %</th>
+                    <th>Average Working Hours</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="reportBody">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <br>
+
+    <button onclick="location.href='adminDashboard.html'">
+        ⬅ Back
+    </button>
+
+</div>
+
+<script type="module" src="js/adminMonthlyReport.js"></script>
+<footer class="footer">
+
+    <p>
+        © 2026 Version 1.0
+        &nbsp; | &nbsp;
+        Developed by <strong>OM S PATIL</strong>
+    </p>
+
+</footer>
+</body>
+
+</html>

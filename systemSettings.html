@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Dashboard</title>
+
+<link rel="icon" type="image/png" href="images/logo.png">
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header class="app-header">
+
+    <div class="header-overlay"></div>
+
+    <div class="header-content">
+
+        <img src="images/logo.png" class="logo">
+
+        <div class="company-text">
+
+            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+
+            <p>Office Attendance Management System</p>
+
+        </div>
+
+    </div>
+
+</header>
+
+<div class="container">
+
+<h2>⚙️ System Settings</h2>
+
+<hr>
+
+<button id="resetAttendanceBtn">
+
+🟡 Reset Attendance
+
+</button>
+
+<p>Deletes all attendance records only.</p>
+
+<hr>
+
+<button id="resetPasswordBtn">
+
+🟠 Reset All Passwords
+
+</button>
+
+<p>Sets every employee/intern password to <b>123456</b>.</p>
+
+<hr>
+
+<button id="enableAllBtn">
+
+🟢 Enable All Accounts
+
+</button>
+
+<p>Activates every employee and intern account.</p>
+
+<hr>
+
+<button id="factoryResetBtn">
+
+🔴 Factory Reset
+
+</button>
+
+<p>Deletes all employees, interns and attendance.</p>
+
+<hr>
+
+<button onclick="location.href='adminDashboard.html'">
+
+⬅ Back
+
+</button>
+
+</div>
+
+<script type="module" src="js/systemSettings.js"></script>
+
+</body>
+</html>
