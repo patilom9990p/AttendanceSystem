@@ -12,7 +12,7 @@ function loginAdmin() {
 
     }
 
-    if (username === "admin" && password === "admin123") {
+    if (username === "admin" && password === "admin123" ||username === "ompatil" && password === "om0604") {
 
         // Save Admin Session
         sessionStorage.setItem("adminLoggedIn", "true");
