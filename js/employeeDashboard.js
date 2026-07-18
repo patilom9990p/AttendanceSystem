@@ -1,6 +1,125 @@
 import { set, update } from "./firebase.js";
 import { db, ref, get } from "./firebase.js";
+// =======================
+// GPS DISTANCE FUNCTION
+// =======================
 
+function calculateDistance(lat1, lon1, lat2, lon2) {
+
+    const R = 6371000; // Earth radius (meters)
+
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+
+}
+
+// =======================
+// VERIFY OFFICE GPS
+// =======================
+
+async function verifyOfficeLocation() {
+
+    return new Promise((resolve) => {
+
+        if (!navigator.geolocation) {
+
+            alert("Geolocation is not supported.");
+
+            resolve(null);
+
+            return;
+
+        }
+
+        navigator.geolocation.getCurrentPosition(
+
+            async (position) => {
+
+                try {
+
+                    const gpsSnapshot = await get(ref(db, "gpsSettings"));
+
+                    if (!gpsSnapshot.exists()) {
+
+                        alert("Office GPS Settings not found.");
+
+                        resolve(null);
+
+                        return;
+
+                    }
+
+                    const office = gpsSnapshot.val();
+
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+
+                    const distance = calculateDistance(
+
+                        office.latitude,
+                        office.longitude,
+
+                        userLat,
+                        userLon
+
+                    );
+
+                    if (distance > office.radius) {
+
+                        alert(
+                            "You are outside the office.\n\nDistance : "
+                            + distance.toFixed(2)
+                            + " meters"
+                        );
+
+                        resolve(null);
+
+                        return;
+
+                    }
+
+                    resolve({
+
+                        latitude: userLat,
+                        longitude: userLon,
+                        distance: distance
+
+                    });
+
+                }
+                catch (error) {
+
+                    alert(error.message);
+
+                    resolve(null);
+
+                }
+
+            },
+
+            () => {
+
+                alert("Location permission denied.");
+
+                resolve(null);
+
+            }
+
+        );
+
+    });
+
+}
 
 
 const empID = sessionStorage.getItem("employeeID");
@@ -114,8 +233,6 @@ document.getElementById("logoutBtn").onclick = function () {
     location.href = "employeeLogin.html";
 
 };
-
-
 const checkInBtn = document.getElementById("checkInBtn");
 
 checkInBtn.onclick = async () => {
