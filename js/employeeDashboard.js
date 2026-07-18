@@ -114,7 +114,7 @@ document.getElementById("logoutBtn").onclick = function () {
     location.href = "employeeLogin.html";
 
 };
-const checkInBtn=document.getElementById("checkInBtn");
+
 
 const checkInBtn = document.getElementById("checkInBtn");
 
