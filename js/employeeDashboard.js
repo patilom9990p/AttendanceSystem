@@ -116,25 +116,41 @@ document.getElementById("logoutBtn").onclick = function () {
 };
 const checkInBtn=document.getElementById("checkInBtn");
 
-checkInBtn.onclick=async()=>{
+const checkInBtn = document.getElementById("checkInBtn");
 
-    const now=new Date();
+checkInBtn.onclick = async () => {
 
-    const today=now.toISOString().split("T")[0];
+    // Verify Office GPS
+    const gps = await verifyOfficeLocation();
 
-    await set(ref(db,"attendance/"+empID+"/"+today),{
+    if (!gps) return;
 
-        checkIn:now.toLocaleTimeString(),
+    const now = new Date();
 
-        checkInTimestamp:now.getTime(),
+    const today = now.toISOString().split("T")[0];
 
-        checkOut:"",
+    await set(ref(db, "attendance/" + empID + "/" + today), {
 
-        checkOutTimestamp:0,
+        checkIn: now.toLocaleTimeString(),
 
-        workingHours:"",
+        checkInTimestamp: now.getTime(),
 
-        status:"Present"
+        checkOut: "",
+
+        checkOutTimestamp: 0,
+
+        workingHours: "",
+
+        status: "Present",
+
+        // GPS Details
+        latitude: gps.latitude,
+
+        longitude: gps.longitude,
+
+        distance: Number(gps.distance.toFixed(2)),
+
+        gpsVerified: true
 
     });
 
@@ -143,40 +159,60 @@ checkInBtn.onclick=async()=>{
     loadTodayAttendance();
 
 };
-const checkOutBtn=document.getElementById("checkOutBtn");
+const checkOutBtn = document.getElementById("checkOutBtn");
 
-checkOutBtn.onclick=async()=>{
+checkOutBtn.onclick = async () => {
 
-    const today=new Date().toISOString().split("T")[0];
+    // Verify Office GPS
+    const gps = await verifyOfficeLocation();
 
-    const snapshot=await get(
-        ref(db,"attendance/"+empID+"/"+today)
+    if (!gps) return;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const snapshot = await get(
+        ref(db, "attendance/" + empID + "/" + today)
     );
 
-    const data=snapshot.val();
+    if (!snapshot.exists()) {
 
-    const now=Date.now();
+        alert("No Check-In Record Found.");
 
-    const diff=now-data.checkInTimestamp;
+        return;
 
-    const h=Math.floor(diff/3600000);
+    }
 
-    const m=Math.floor((diff%3600000)/60000);
+    const data = snapshot.val();
 
-    const s=Math.floor((diff%60000)/1000);
+    const now = Date.now();
 
-    const workingHours=
-        String(h).padStart(2,"0")+":"+
-        String(m).padStart(2,"0")+":"+
-        String(s).padStart(2,"0");
+    const diff = now - data.checkInTimestamp;
 
-    await update(ref(db,"attendance/"+empID+"/"+today),{
+    const h = Math.floor(diff / 3600000);
 
-        checkOut:new Date().toLocaleTimeString(),
+    const m = Math.floor((diff % 3600000) / 60000);
 
-        checkOutTimestamp:now,
+    const s = Math.floor((diff % 60000) / 1000);
 
-        workingHours:workingHours
+    const workingHours =
+        String(h).padStart(2, "0") + ":" +
+        String(m).padStart(2, "0") + ":" +
+        String(s).padStart(2, "0");
+
+    await update(ref(db, "attendance/" + empID + "/" + today), {
+
+        checkOut: new Date().toLocaleTimeString(),
+
+        checkOutTimestamp: now,
+
+        workingHours: workingHours,
+
+        // GPS Details
+        checkOutLatitude: gps.latitude,
+
+        checkOutLongitude: gps.longitude,
+
+        checkOutDistance: Number(gps.distance.toFixed(2))
 
     });
 
