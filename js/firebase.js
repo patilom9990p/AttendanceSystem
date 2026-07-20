@@ -8,7 +8,8 @@ import {
     get,
     child,
     update,
-    remove
+    remove,
+    push
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
 // Firebase Configuration
