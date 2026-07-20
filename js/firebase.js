@@ -36,7 +36,8 @@ export {
     get,
     child,
     update,
-    remove
+    remove,
+    push
 };
 export async function generateNextID(type) {
 
