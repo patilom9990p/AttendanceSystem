@@ -27,31 +27,19 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 // VERIFY OFFICE GPS
 // =======================
 
-if (distance > office.radius) {
+async function verifyOfficeLocation() {
 
-    await saveUnauthorizedAttempt("Check In / Check Out", {
+    return new Promise((resolve) => {
 
-        latitude: userLat,
+        if (!navigator.geolocation) {
 
-        longitude: userLon,
+            alert("Geolocation is not supported.");
 
-        distance: distance
+            resolve(null);
 
-    });
+            return;
 
-    alert(
-        "❌ Attendance Denied!\n\n" +
-        "You are outside the office area.\n\n" +
-        "Distance : " + distance.toFixed(2) + " meters.\n\n" +
-        "Your location has been recorded and sent to the Administrator."
-    );
-
-    resolve(null);
-
-    return;
-
-}
-        
+        }
 
         navigator.geolocation.getCurrentPosition(
 
@@ -86,19 +74,30 @@ if (distance > office.radius) {
 
                     );
 
-                    if (distance > office.radius) {
+                   if (distance > office.radius) {
 
-                        alert(
-                            "You are outside the office.\n\nDistance : "
-                            + distance.toFixed(2)
-                            + " meters"
-                        );
+    await saveUnauthorizedAttempt("Check In / Check Out", {
 
-                        resolve(null);
+        latitude: userLat,
 
-                        return;
+        longitude: userLon,
 
-                    }
+        distance: distance
+
+    });
+
+    alert(
+        "❌ Attendance Denied!\n\n" +
+        "You are outside the office area.\n\n" +
+        "Distance : " + distance.toFixed(2) + " meters.\n\n" +
+        "Your location has been recorded and sent to the Administrator."
+    );
+
+    resolve(null);
+
+    return;
+
+}
 
                     resolve({
 
