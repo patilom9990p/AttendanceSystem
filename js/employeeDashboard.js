@@ -89,8 +89,8 @@ async function verifyOfficeLocation() {
     alert(
         "❌ Attendance Denied!\n\n" +
         "You are outside the office area.\n\n" +
-        "Distance : " + distance.toFixed(2) + " meters.\n\n"
-        
+        "Distance : " + distance.toFixed(2) + " meters.\n\n" +
+        "Your location has been recorded and sent to the Administrator."
     );
 
     resolve(null);
@@ -387,4 +387,3 @@ checkOutBtn.onclick = async () => {
     loadTodayAttendance();
 
 };
-
