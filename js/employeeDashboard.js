@@ -40,6 +40,7 @@ async function verifyOfficeLocation() {
             return;
 
         }
+        
 
         navigator.geolocation.getCurrentPosition(
 
@@ -120,7 +121,45 @@ async function verifyOfficeLocation() {
     });
 
 }
+async function saveUnauthorizedAttempt(action, gps) {
 
+    const empSnapshot = await get(ref(db, "employees/" + empID));
+
+    if (!empSnapshot.exists()) return;
+
+    const employee = empSnapshot.val();
+
+    const attemptRef = push(
+        ref(db, "unauthorizedAttempts/" + empID)
+    );
+
+    const now = new Date();
+
+    await set(attemptRef, {
+
+        employeeId: employee.employeeId,
+
+        name: employee.name,
+
+        type: employee.type,
+
+        action: action,
+
+        latitude: gps.latitude,
+
+        longitude: gps.longitude,
+
+        distance: Number(gps.distance.toFixed(2)),
+
+        date: now.toLocaleDateString(),
+
+        time: now.toLocaleTimeString(),
+
+        timestamp: now.getTime()
+
+    });
+
+}
 
 const empID = sessionStorage.getItem("employeeID");
 
