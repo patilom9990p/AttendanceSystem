@@ -275,22 +275,25 @@ select{
    BUTTONS
 =========================== */
 
-button{
+button {
 
-    width:100%;
-    padding:15px;
+    width: 100%;
 
-    border:none;
+    padding: 12px 15px;
 
-    border-radius:12px;
+    border: none;
 
-    font-size:17px;
+    border-radius: 10px;
 
-    font-weight:600;
+    font-size: 16px;
 
-    cursor:pointer;
+    font-weight: 600;
 
-    transition:.35s;
+    cursor: pointer;
+
+    transition: 0.35s;
+
+    margin-bottom: 10px;
 
 }
 .login-btn{
