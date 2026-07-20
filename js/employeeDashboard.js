@@ -80,7 +80,7 @@ async function verifyOfficeLocation() {
                             "Distance : " +
                             distance.toFixed(2) +
                             " meters.\n\n" +
-                            "Your location has been recorded and sent to the Administrator."
+                            
                         );
 
                         resolve(null);
