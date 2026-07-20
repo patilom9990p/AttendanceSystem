@@ -387,4 +387,4 @@ checkOutBtn.onclick = async () => {
     loadTodayAttendance();
 
 };
-loadAttendanceHistory();
+
