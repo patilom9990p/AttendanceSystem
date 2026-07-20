@@ -27,19 +27,30 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 // VERIFY OFFICE GPS
 // =======================
 
-async function verifyOfficeLocation() {
+if (distance > office.radius) {
 
-    return new Promise((resolve) => {
+    await saveUnauthorizedAttempt("Check In / Check Out", {
 
-        if (!navigator.geolocation) {
+        latitude: userLat,
 
-            alert("Geolocation is not supported.");
+        longitude: userLon,
 
-            resolve(null);
+        distance: distance
 
-            return;
+    });
 
-        }
+    alert(
+        "❌ Attendance Denied!\n\n" +
+        "You are outside the office area.\n\n" +
+        "Distance : " + distance.toFixed(2) + " meters.\n\n" +
+        "Your location has been recorded and sent to the Administrator."
+    );
+
+    resolve(null);
+
+    return;
+
+}
         
 
         navigator.geolocation.getCurrentPosition(
