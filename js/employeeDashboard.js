@@ -1,4 +1,4 @@
-import { set, update } from "./firebase.js";
+import { set, update, push } from "./firebase.js";
 import { db, ref, get } from "./firebase.js";
 // =======================
 // GPS DISTANCE FUNCTION
