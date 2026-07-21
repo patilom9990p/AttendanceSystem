@@ -40,7 +40,8 @@ async function loadReport() {
         const emp = employees[empID];
 
         let present = 0;
-        let totalSeconds = 0;
+let leave = 0;
+let totalSeconds = 0;
 
         for (let day = 1; day <= totalDays; day++) {
 
@@ -51,28 +52,33 @@ async function loadReport() {
 
                 const record = attendance[empID][date];
 
-                if (record.status === "Present") {
+               if (record.status === "Present") {
 
-                    present++;
+    present++;
 
-                    if (record.workingHours) {
+    if (record.workingHours) {
 
-                        const p = record.workingHours.split(":");
+        const p = record.workingHours.split(":");
 
-                        totalSeconds +=
-                            parseInt(p[0]) * 3600 +
-                            parseInt(p[1]) * 60 +
-                            parseInt(p[2]);
+        totalSeconds +=
+            parseInt(p[0]) * 3600 +
+            parseInt(p[1]) * 60 +
+            parseInt(p[2]);
 
-                    }
+    }
 
-                }
+}
+else if (record.status === "Leave") {
+
+    leave++;
+
+}
 
             }
 
         }
 
-        const absent = totalDays - present;
+        const absent = totalDays - present - leave;
 
         const percent =
             ((present / totalDays) * 100).toFixed(2) + "%";
@@ -90,16 +96,17 @@ async function loadReport() {
 
         }
 
-        tableBody.innerHTML += `
-        <tr>
-            <td>${empID}</td>
-            <td>${emp.name}</td>
-            <td>${emp.type}</td>
-            <td>${present}</td>
-            <td>${absent}</td>
-            <td>${percent}</td>
-            <td>${average}</td>
-        </tr>`;
+       tableBody.innerHTML += `
+<tr>
+    <td>${empID}</td>
+    <td>${emp.name}</td>
+    <td>${emp.type}</td>
+    <td>${present}</td>
+    <td>${leave}</td>
+    <td>${absent}</td>
+    <td>${percent}</td>
+    <td>${average}</td>
+</tr>`;
     }
 
 }
@@ -125,14 +132,15 @@ console.log("Month:", month);
     let summaryData = [];
 
     summaryData.push([
-        "Employee ID",
-        "Name",
-        "Type",
-        "Present Days",
-        "Absent Days",
-        "Attendance %",
-        "Average Working Hours"
-    ]);
+    "Employee ID",
+    "Name",
+    "Type",
+    "Present Days",
+    "Leave Days",
+    "Absent Days",
+    "Attendance %",
+    "Average Working Hours"
+]);
 
     let dailyData = [];
 
@@ -160,7 +168,8 @@ console.log(attendance[empID]);
         const emp = employees[empID];
 
         let present = 0;
-        let totalSeconds = 0;
+let leave = 0;
+let totalSeconds = 0;
 
         for (let day = 1; day <= totalDays; day++) {
 
@@ -201,26 +210,27 @@ console.log(attendance[empID]);
                 workingHours =
                     record.workingHours || "--";
 
-                if (status === "Present") {
+           if (status === "Present") {
 
-                    present++;
+    present++;
 
-                    if (record.workingHours) {
+    if (record.workingHours) {
 
-                        const p =
-                            record.workingHours.split(":");
+        const p = record.workingHours.split(":");
 
-                        totalSeconds +=
+        totalSeconds +=
+            parseInt(p[0]) * 3600 +
+            parseInt(p[1]) * 60 +
+            parseInt(p[2]);
 
-                            parseInt(p[0]) * 3600 +
+    }
 
-                            parseInt(p[1]) * 60 +
+}
+else if (status === "Leave") {
 
-                            parseInt(p[2]);
+    leave++;
 
-                    }
-
-                }
+}
 
             }
 
@@ -239,7 +249,7 @@ console.log(attendance[empID]);
         }
 
         const absent =
-            totalDays - present;
+    totalDays - present - leave;
 
         const attendancePercent =
             ((present / totalDays) * 100).toFixed(2) + "%";
@@ -267,15 +277,16 @@ console.log(attendance[empID]);
 
         }
 
-        summaryData.push([
-            empID,
-            emp.name,
-            emp.type,
-            present,
-            absent,
-            attendancePercent,
-            average
-        ]);
+       summaryData.push([
+    empID,
+    emp.name,
+    emp.type,
+    present,
+    leave,
+    absent,
+    attendancePercent,
+    average
+]);
 
     }
         // Create Workbook
@@ -285,15 +296,16 @@ console.log(attendance[empID]);
     const wsSummary =
         XLSX.utils.aoa_to_sheet(summaryData);
 
-    wsSummary["!cols"] = [
-        { wch: 15 },
-        { wch: 25 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 22 }
-    ];
+   wsSummary["!cols"] = [
+    { wch: 15 }, // Employee ID
+    { wch: 25 }, // Name
+    { wch: 15 }, // Type
+    { wch: 15 }, // Present
+    { wch: 15 }, // Leave
+    { wch: 15 }, // Absent
+    { wch: 15 }, // Attendance %
+    { wch: 22 }  // Average Hours
+];
 
     XLSX.utils.book_append_sheet(
         wb,
