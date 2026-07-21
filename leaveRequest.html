@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Leave Request</title>
+
+<link rel="icon" type="image/png" href="images/logo.png">
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header class="app-header">
+
+<div class="header-overlay"></div>
+
+<div class="header-content">
+
+<img src="images/logo.png" class="logo">
+
+<div class="company-text">
+
+<h1>WaveNxD Technologies Pvt. Ltd.</h1>
+
+<p>Office Attendance Management System</p>
+
+</div>
+
+</div>
+
+</header>
+
+<div class="container">
+
+<h2>📝 Leave Request</h2>
+
+<hr>
+
+<label><b>Select Leave Date</b></label>
+
+<br><br>
+
+<input type="date" id="leaveDate">
+
+<br><br>
+
+<label><b>Reason</b></label>
+
+<br><br>
+
+<textarea
+id="reason"
+rows="5"
+style="width:100%;border-radius:10px;padding:10px;"
+placeholder="Enter Reason">
+</textarea>
+
+<br><br>
+
+<button id="submitBtn">
+📤 Submit Request
+</button>
+
+<br><br>
+
+<button onclick="location.href='employeeDashboard.html'">
+⬅ Back
+</button>
+
+<hr>
+
+<h3>Previous Requests</h3>
+
+<div class="table-container">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+
+<th>Reason</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody id="requestTable">
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script type="module" src="js/leaveRequest.js"></script>
+
+</body>
+
+</html>
