@@ -114,14 +114,36 @@ async function loadRequests() {
 // =============================
 window.approveRequest = async (empID, requestID) => {
 
-    await update(
-        ref(db, "leaveRequests/" + empID + "/" + requestID),
-        {
-            status: "Approved",
-            approvedBy: "Admin",
-            approvedTime: new Date().toLocaleString()
-        }
-    );
+  const requestSnapshot = await get(
+    ref(db, "leaveRequests/" + empID + "/" + requestID)
+);
+
+const request = requestSnapshot.val();
+
+await update(
+    ref(db, "leaveRequests/" + empID + "/" + requestID),
+    {
+        status: "Approved",
+        approvedBy: "Admin",
+        approvedTime: new Date().toLocaleString()
+    }
+);
+
+// Create Attendance Record
+await update(
+    ref(db, "attendance/" + empID + "/" + request.leaveDate),
+    {
+        status: "Leave",
+        checkIn: "",
+        checkOut: "",
+        workingHours: "",
+        leaveApproved: true
+    }
+);
+
+alert("Leave Approved");
+
+loadRequests();
 
     alert("Leave Approved");
 
