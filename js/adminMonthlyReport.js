@@ -15,7 +15,94 @@ const tableBody = document.getElementById("reportBody");
 // Current Month
 
 monthPicker.value = new Date().toISOString().slice(0, 7);
+document.getElementById("loadBtn").addEventListener("click", loadReport);
 
+loadReport();
+async function loadReport() {
+
+    tableBody.innerHTML = "";
+
+    const month = monthPicker.value;
+
+    const empSnapshot = await get(ref(db, "employees"));
+    const attSnapshot = await get(ref(db, "attendance"));
+
+    if (!empSnapshot.exists()) return;
+
+    const employees = empSnapshot.val();
+    const attendance = attSnapshot.exists() ? attSnapshot.val() : {};
+
+    const [year, monthNum] = month.split("-");
+    const totalDays = new Date(parseInt(year), parseInt(monthNum), 0).getDate();
+
+    for (const empID in employees) {
+
+        const emp = employees[empID];
+
+        let present = 0;
+        let totalSeconds = 0;
+
+        for (let day = 1; day <= totalDays; day++) {
+
+            const date =
+                month + "-" + String(day).padStart(2, "0");
+
+            if (attendance[empID] && attendance[empID][date]) {
+
+                const record = attendance[empID][date];
+
+                if (record.status === "Present") {
+
+                    present++;
+
+                    if (record.workingHours) {
+
+                        const p = record.workingHours.split(":");
+
+                        totalSeconds +=
+                            parseInt(p[0]) * 3600 +
+                            parseInt(p[1]) * 60 +
+                            parseInt(p[2]);
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        const absent = totalDays - present;
+
+        const percent =
+            ((present / totalDays) * 100).toFixed(2) + "%";
+
+        let average = "--";
+
+        if (present > 0) {
+
+            const avg = Math.floor(totalSeconds / present);
+
+            average =
+                String(Math.floor(avg / 3600)).padStart(2, "0") + ":" +
+                String(Math.floor((avg % 3600) / 60)).padStart(2, "0") + ":" +
+                String(avg % 60).padStart(2, "0");
+
+        }
+
+        tableBody.innerHTML += `
+        <tr>
+            <td>${empID}</td>
+            <td>${emp.name}</td>
+            <td>${emp.type}</td>
+            <td>${present}</td>
+            <td>${absent}</td>
+            <td>${percent}</td>
+            <td>${average}</td>
+        </tr>`;
+    }
+
+}
 document.getElementById("exportCSVBtn").addEventListener("click", exportExcel);
 
 async function exportExcel() {
@@ -67,6 +154,7 @@ console.log("Month:", month);
         new Date(parseInt(year), parseInt(monthNum), 0).getDate();
 
     for (const empID in employees) {
+        
     console.log("Checking Employee:", empID);
 console.log(attendance[empID]);
         const emp = employees[empID];
