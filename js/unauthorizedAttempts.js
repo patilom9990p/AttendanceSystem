@@ -1,4 +1,4 @@
-import { db, ref, get } from "./firebase.js";
+import { db, ref, get, remove } from "./firebase.js";
 
 const tbody = document.querySelector("#attemptTable tbody");
 
@@ -84,3 +84,27 @@ window.viewMap = function(lat, lon, distance){
     location.href = "gpsMap.html";
 
 }
+document.getElementById("clearAttemptsBtn").onclick = async () => {
+
+    const confirmDelete = confirm(
+        "Are you sure you want to delete ALL unauthorized GPS attempts?\n\nThis action cannot be undone."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+
+        await remove(ref(db, "unauthorizedAttempts"));
+
+        alert("✅ All unauthorized GPS attempts have been deleted.");
+
+        location.reload();
+
+    }
+    catch (error) {
+
+        alert(error.message);
+
+    }
+
+};
