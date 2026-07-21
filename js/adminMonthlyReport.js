@@ -16,74 +16,116 @@ const tableBody = document.getElementById("reportBody");
 
 monthPicker.value = new Date().toISOString().slice(0, 7);
 
-document.getElementById("loadBtn").addEventListener("click", loadReport);
-alert("loadReport() called");
-loadReport();
+document.getElementById("exportCSVBtn").addEventListener("click", exportExcel);
 
-async function loadReport() {
-
-    tableBody.innerHTML = "";
+async function exportExcel() {
 
     const month = monthPicker.value;
 
     const empSnapshot = await get(ref(db, "employees"));
-
     const attSnapshot = await get(ref(db, "attendance"));
 
     if (!empSnapshot.exists()) {
-
+        alert("No employees found.");
         return;
-
     }
 
     const employees = empSnapshot.val();
-
     const attendance = attSnapshot.exists() ? attSnapshot.val() : {};
-    console.log("Employees:", employees);
-console.log("Attendance:", attendance);
-console.log("Selected Month:", month);
+
+    let summaryData = [];
+
+    summaryData.push([
+        "Employee ID",
+        "Name",
+        "Type",
+        "Present Days",
+        "Absent Days",
+        "Attendance %",
+        "Average Working Hours"
+    ]);
+
+    let dailyData = [];
+
+    dailyData.push([
+        "Employee ID",
+        "Name",
+        "Type",
+        "Date",
+        "Day",
+        "Status",
+        "Check In",
+        "Check Out",
+        "Working Hours"
+    ]);
+
+    const [year, monthNum] = month.split("-");
+
+    const totalDays =
+        new Date(parseInt(year), parseInt(monthNum), 0).getDate();
 
     for (const empID in employees) {
 
         const emp = employees[empID];
 
         let present = 0;
-
-        let total = 0;
-
         let totalSeconds = 0;
 
-        if (attendance[empID]) {
+        for (let day = 1; day <= totalDays; day++) {
 
-            for (const date in attendance[empID]) {
+            const date =
+                month +
+                "-" +
+                String(day).padStart(2, "0");
 
-                if (date.startsWith(month)) {
+            const jsDate = new Date(date);
 
-                    total++;
+            const dayName =
+                jsDate.toLocaleDateString("en-US", {
+                    weekday: "long"
+                });
 
-                    const data = attendance[empID][date];
+            let status = "Absent";
+            let checkIn = "--";
+            let checkOut = "--";
+            let workingHours = "--";
 
-                    if (data.status === "Present") {
+            if (
+                attendance[empID] &&
+                attendance[empID][date]
+            ) {
 
-                        present++;
+                const record =
+                    attendance[empID][date];
 
-                    }
+                status =
+                    record.status || "Present";
 
-                    if (data.workingHours) {
+                checkIn =
+                    record.checkIn || "--";
 
-                        const parts = data.workingHours.split(":");
+                checkOut =
+                    record.checkOut || "--";
 
-                        if (parts.length === 3) {
+                workingHours =
+                    record.workingHours || "--";
 
-                            totalSeconds +=
+                if (status === "Present") {
 
-                                parseInt(parts[0]) * 3600 +
+                    present++;
 
-                                parseInt(parts[1]) * 60 +
+                    if (record.workingHours) {
 
-                                parseInt(parts[2]);
+                        const p =
+                            record.workingHours.split(":");
 
-                        }
+                        totalSeconds +=
+
+                            parseInt(p[0]) * 3600 +
+
+                            parseInt(p[1]) * 60 +
+
+                            parseInt(p[2]);
 
                     }
 
@@ -91,25 +133,41 @@ console.log("Selected Month:", month);
 
             }
 
+            dailyData.push([
+                empID,
+                emp.name,
+                emp.type,
+                date,
+                dayName,
+                status,
+                checkIn,
+                checkOut,
+                workingHours
+            ]);
+
         }
 
-        const absent = total - present;
+        const absent =
+            totalDays - present;
 
-        const percent = total === 0
-            ? "0%"
-            : ((present / total) * 100).toFixed(2) + "%";
+        const attendancePercent =
+            ((present / totalDays) * 100).toFixed(2) + "%";
 
         let average = "--";
 
         if (present > 0) {
 
-            const avg = Math.floor(totalSeconds / present);
+            const avg =
+                Math.floor(totalSeconds / present);
 
-            const h = Math.floor(avg / 3600);
+            const h =
+                Math.floor(avg / 3600);
 
-            const m = Math.floor((avg % 3600) / 60);
+            const m =
+                Math.floor((avg % 3600) / 60);
 
-            const s = avg % 60;
+            const s =
+                avg % 60;
 
             average =
                 String(h).padStart(2, "0") + ":" +
@@ -118,75 +176,66 @@ console.log("Selected Month:", month);
 
         }
 
-        tableBody.innerHTML += `
-
-<tr>
-
-<td>${empID}</td>
-
-<td>${emp.name}</td>
-
-<td>${emp.type}</td>
-
-<td>${present}</td>
-
-<td>${absent}</td>
-
-<td>${percent}</td>
-
-<td>${average}</td>
-
-</tr>
-
-`;
+        summaryData.push([
+            empID,
+            emp.name,
+            emp.type,
+            present,
+            absent,
+            attendancePercent,
+            average
+        ]);
 
     }
+        // Create Workbook
+    const wb = XLSX.utils.book_new();
 
-}
-document.getElementById("exportCSVBtn").addEventListener("click", exportCSV);
+    // Summary Sheet
+    const wsSummary =
+        XLSX.utils.aoa_to_sheet(summaryData);
 
-function exportCSV() {
+    wsSummary["!cols"] = [
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 22 }
+    ];
 
-    let csv =
-"Employee ID,Name,Type,Present Days,Absent Days,Attendance %,Average Working Hours\n";
+    XLSX.utils.book_append_sheet(
+        wb,
+        wsSummary,
+        "Summary"
+    );
 
-    const rows = document.querySelectorAll("#reportBody tr");
+    // Daily Attendance Sheet
+    const wsDaily =
+        XLSX.utils.aoa_to_sheet(dailyData);
 
-    rows.forEach(row => {
+    wsDaily["!cols"] = [
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 18 }
+    ];
 
-        const cols = row.querySelectorAll("td");
+    XLSX.utils.book_append_sheet(
+        wb,
+        wsDaily,
+        "Daily Attendance"
+    );
 
-        const rowData = [];
-
-        cols.forEach(col => {
-
-            rowData.push(col.innerText);
-
-        });
-
-        csv += rowData.join(",") + "\n";
-
-    });
-
-    const blob = new Blob([csv], {
-
-        type: "text/csv;charset=utf-8;"
-
-    });
-
-    const link = document.createElement("a");
-
-    const url = URL.createObjectURL(blob);
-
-    link.href = url;
-
-    link.download =
-        "Attendance_Report_" + monthPicker.value + ".csv";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
+    // Download Excel File
+    XLSX.writeFile(
+        wb,
+        `Attendance_Report_${month}.xlsx`
+    );
 
 }
