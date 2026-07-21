@@ -32,7 +32,9 @@ async function exportExcel() {
 
     const employees = empSnapshot.val();
     const attendance = attSnapshot.exists() ? attSnapshot.val() : {};
-
+    console.log("Employees:", employees);
+console.log("Attendance:", attendance);
+console.log("Month:", month);
     let summaryData = [];
 
     summaryData.push([
@@ -65,7 +67,8 @@ async function exportExcel() {
         new Date(parseInt(year), parseInt(monthNum), 0).getDate();
 
     for (const empID in employees) {
-
+    console.log("Checking Employee:", empID);
+console.log(attendance[empID]);
         const emp = employees[empID];
 
         let present = 0;
