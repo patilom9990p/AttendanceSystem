@@ -6,13 +6,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Employee Dashboard</title>
+<title>Add Employee</title>
 
 <link rel="icon" type="image/png" href="images/logo.png">
 
 <link rel="stylesheet" href="css/style.css">
 
 </head>
+
+<body>
+
 <header class="app-header">
 
     <div class="header-overlay"></div>
@@ -32,17 +35,26 @@
     </div>
 
 </header>
-<body>
 
 <div class="container">
 
     <h1>Add Employee</h1>
 
-    <input type="text" id="name" placeholder="Employee Name">
+    <hr>
+
+    <input
+        type="text"
+        id="name"
+        placeholder="Employee Name"
+    >
 
     <br><br>
 
-    <input type="text" id="college" placeholder="College (Short Form)">
+    <input
+        type="text"
+        id="college"
+        placeholder="College (Short Form)"
+    >
 
     <br><br>
 
@@ -50,9 +62,21 @@
 
         <option value="">Select Type</option>
 
-        <option>Employee</option>
+        <option value="Employee">Employee</option>
 
-        <option>Intern</option>
+        <option value="Intern">Intern</option>
+
+    </select>
+
+    <br><br>
+
+    <select id="company">
+
+        <option value="">Select Company</option>
+
+        <option value="WaveNxD">WaveNxD</option>
+
+        <option value="Nexa Prime">Nexa Prime</option>
 
     </select>
 
@@ -62,14 +86,16 @@
         Save Employee
     </button>
 
+    <br><br>
 
     <button onclick="location.href='adminDashboard.html'">
-        Back
+        ⬅ Back
     </button>
 
 </div>
 
 <script type="module" src="js/addEmployee.js"></script>
+
 <footer class="footer">
 
     <p>
@@ -79,6 +105,7 @@
     </p>
 
 </footer>
+
 </body>
 
 </html>
