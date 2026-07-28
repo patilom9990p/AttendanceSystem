@@ -7,9 +7,9 @@ import {
     remove
 } from "./firebase.js";
 
-// ==============================
+// ==========================================
 // GET EMPLOYEE ID FROM URL
-// ==============================
+// ==========================================
 
 const params = new URLSearchParams(window.location.search);
 const empID = params.get("id");
@@ -35,9 +35,9 @@ if (!empID) {
 
 }
 
-// ==============================
+// ==========================================
 // GET COMPANY PREFIX
-// ==============================
+// ==========================================
 
 function getCompanyPrefix(company) {
 
@@ -53,9 +53,9 @@ function getCompanyPrefix(company) {
 
 }
 
-// ==============================
+// ==========================================
 // GET TYPE PREFIX
-// ==============================
+// ==========================================
 
 function getTypePrefix(type) {
 
@@ -71,9 +71,51 @@ function getTypePrefix(type) {
 
 }
 
-// ==============================
+// ==========================================
+// CHECK NEW EMPLOYEE ID FORMAT
+// ==========================================
+
+function isNewEmployeeId(employeeId) {
+
+    const pattern =
+        /^(WNX|NXP)-(EMP|INT)\d{3,}$/;
+
+    return pattern.test(employeeId);
+
+}
+
+// ==========================================
+// MOVE FIREBASE RECORD
+// ==========================================
+
+async function moveFirebaseRecord(
+    databasePath,
+    oldID,
+    newID
+) {
+
+    const snapshot = await get(
+        ref(db, databasePath + "/" + oldID)
+    );
+
+    if (!snapshot.exists()) {
+        return;
+    }
+
+    await set(
+        ref(db, databasePath + "/" + newID),
+        snapshot.val()
+    );
+
+    await remove(
+        ref(db, databasePath + "/" + oldID)
+    );
+
+}
+
+// ==========================================
 // LOAD EMPLOYEE DETAILS
-// ==============================
+// ==========================================
 
 async function loadEmployee() {
 
@@ -87,7 +129,8 @@ async function loadEmployee() {
 
             alert("Employee not found.");
 
-            window.location.href = "viewAttendance.html";
+            window.location.href =
+                "viewAttendance.html";
 
             return;
 
@@ -95,11 +138,14 @@ async function loadEmployee() {
 
         const data = snapshot.val();
 
-        nameInput.value = data.name || "";
+        nameInput.value =
+            data.name || "";
 
-        collegeInput.value = data.college || "";
+        collegeInput.value =
+            data.college || "";
 
-        typeInput.value = data.type || "Employee";
+        typeInput.value =
+            data.type || "Employee";
 
         companyInput.value =
             data.company || "WaveNxD";
@@ -118,28 +164,32 @@ async function loadEmployee() {
 
 }
 
-// ==============================
+// ==========================================
 // UPDATE BUTTON
-// ==============================
+// ==========================================
 
 updateBtn.addEventListener(
     "click",
     updateEmployee
 );
 
-// ==============================
+// ==========================================
 // UPDATE EMPLOYEE
-// ==============================
+// ==========================================
 
 async function updateEmployee() {
 
-    const name = nameInput.value.trim();
+    const name =
+        nameInput.value.trim();
 
-    const college = collegeInput.value.trim();
+    const college =
+        collegeInput.value.trim();
 
-    const newType = typeInput.value;
+    const newType =
+        typeInput.value;
 
-    const newCompany = companyInput.value;
+    const newCompany =
+        companyInput.value;
 
     if (
         name === "" ||
@@ -162,7 +212,9 @@ async function updateEmployee() {
 
     if (!companyPrefix || !typePrefix) {
 
-        alert("Invalid company or employee type.");
+        alert(
+            "Invalid company or employee type."
+        );
 
         return;
 
@@ -185,22 +237,34 @@ async function updateEmployee() {
 
         }
 
-        const oldData = empSnapshot.val();
+        const oldData =
+            empSnapshot.val();
 
         const oldCompany =
             oldData.company || "WaveNxD";
 
+        const oldType =
+            oldData.type || "Employee";
+
         const typeChanged =
-            oldData.type !== newType;
+            oldType !== newType;
 
         const companyChanged =
             oldCompany !== newCompany;
 
-        // ==================================
-        // COMPANY AND TYPE ARE NOT CHANGED
-        // ==================================
+        // Existing EMP001 or INT001 requires migration
+        const oldIdNeedsMigration =
+            !isNewEmployeeId(empID);
 
-        if (!typeChanged && !companyChanged) {
+        // ======================================
+        // NO TYPE/COMPANY CHANGE AND ID IS NEW
+        // ======================================
+
+        if (
+            !typeChanged &&
+            !companyChanged &&
+            !oldIdNeedsMigration
+        ) {
 
             await update(
                 ref(db, "employees/" + empID),
@@ -236,46 +300,57 @@ async function updateEmployee() {
 
         }
 
-        // ==================================
-        // COMPANY OR TYPE CHANGED
-        // ==================================
+        // ======================================
+        // CREATE CONFIRMATION MESSAGE
+        // ======================================
 
-        let changeMessage =
-            "Employee information has changed.\n\n";
+        let changeMessage = "";
+
+        if (oldIdNeedsMigration) {
+
+            changeMessage =
+                "This employee uses the old Employee ID format.\n\n" +
+                "Old Employee ID: " + empID + "\n\n" +
+                "It will be converted to the new ID format.";
+
+        } else {
+
+            changeMessage =
+                "Employee information has changed.";
+
+        }
 
         if (companyChanged && typeChanged) {
 
             changeMessage +=
-                "Company and employee type were changed.";
+                "\n\nCompany and employee type were changed.";
 
         } else if (companyChanged) {
 
             changeMessage +=
-                "Employee company was changed.";
+                "\n\nEmployee company was changed.";
 
-        } else {
+        } else if (typeChanged) {
 
             changeMessage +=
-                "Employee type was changed.";
+                "\n\nEmployee type was changed.";
 
         }
 
         changeMessage +=
-            "\n\nThe Employee ID will also change." +
+            "\n\nThe Employee ID will change." +
             "\n\nDo you want to continue?";
 
         const confirmChange =
             confirm(changeMessage);
 
         if (!confirmChange) {
-
             return;
-
         }
 
-        // ==================================
-        // CREATE NEW PREFIX
-        // ==================================
+        // ======================================
+        // CREATE NEW ID PREFIX
+        // ======================================
 
         const fullPrefix =
             companyPrefix + "-" + typePrefix;
@@ -286,9 +361,9 @@ async function updateEmployee() {
         // NXP-EMP
         // NXP-INT
 
-        // ==================================
+        // ======================================
         // READ ALL EMPLOYEES
-        // ==================================
+        // ======================================
 
         const allEmpSnapshot = await get(
             ref(db, "employees")
@@ -303,42 +378,47 @@ async function updateEmployee() {
 
         for (const id in employees) {
 
-            if (id.startsWith(fullPrefix)) {
+            if (!id.startsWith(fullPrefix)) {
+                continue;
+            }
 
-                const numberPart =
-                    id.substring(fullPrefix.length);
+            const numberPart =
+                id.substring(fullPrefix.length);
 
-                const number =
-                    parseInt(numberPart, 10);
+            const number =
+                parseInt(numberPart, 10);
 
-                if (
-                    !isNaN(number) &&
-                    number > maxNumber
-                ) {
+            if (
+                !isNaN(number) &&
+                number > maxNumber
+            ) {
 
-                    maxNumber = number;
-
-                }
+                maxNumber = number;
 
             }
 
         }
 
-        // ==================================
+        // ======================================
         // GENERATE NEW EMPLOYEE ID
-        // ==================================
+        // ======================================
 
         const newID =
             fullPrefix +
-            String(maxNumber + 1).padStart(3, "0");
+            String(maxNumber + 1).padStart(
+                3,
+                "0"
+            );
 
-        // Example:
+        // Examples:
         // WNX-EMP001
+        // WNX-INT001
+        // NXP-EMP001
         // NXP-INT001
 
-        // ==================================
-        // CHECK NEW ID DOES NOT EXIST
-        // ==================================
+        // ======================================
+        // CHECK NEW ID
+        // ======================================
 
         const newEmployeeSnapshot = await get(
             ref(db, "employees/" + newID)
@@ -355,9 +435,9 @@ async function updateEmployee() {
 
         }
 
-        // ==================================
+        // ======================================
         // CREATE NEW EMPLOYEE RECORD
-        // ==================================
+        // ======================================
 
         await set(
             ref(db, "employees/" + newID),
@@ -381,80 +461,63 @@ async function updateEmployee() {
                         : true,
 
                 createdAt:
-                    oldData.createdAt || Date.now(),
+                    oldData.createdAt ||
+                    Date.now(),
 
-                updatedAt: Date.now()
+                updatedAt:
+                    Date.now()
             }
         );
 
-        // ==================================
-        // MOVE ATTENDANCE RECORDS
-        // ==================================
+        // ======================================
+        // MOVE ATTENDANCE
+        // ======================================
 
-        const attendanceSnapshot = await get(
-            ref(db, "attendance/" + empID)
+        await moveFirebaseRecord(
+            "attendance",
+            empID,
+            newID
         );
 
-        if (attendanceSnapshot.exists()) {
-
-            await set(
-                ref(db, "attendance/" + newID),
-                attendanceSnapshot.val()
-            );
-
-            await remove(
-                ref(db, "attendance/" + empID)
-            );
-
-        }
-
-        // ==================================
+        // ======================================
         // MOVE LEAVE REQUESTS
-        // ==================================
+        // ======================================
 
-        const leaveSnapshot = await get(
-            ref(db, "leaveRequests/" + empID)
+        await moveFirebaseRecord(
+            "leaveRequests",
+            empID,
+            newID
         );
 
-        if (leaveSnapshot.exists()) {
-
-            await set(
-                ref(db, "leaveRequests/" + newID),
-                leaveSnapshot.val()
-            );
-
-            await remove(
-                ref(db, "leaveRequests/" + empID)
-            );
-
-        }
-
-        // ==================================
+        // ======================================
         // MOVE UNAUTHORIZED GPS ATTEMPTS
-        // ==================================
+        // ======================================
 
-        const gpsAttemptSnapshot = await get(
+        const gpsSnapshot = await get(
             ref(
                 db,
                 "unauthorizedAttempts/" + empID
             )
         );
 
-        if (gpsAttemptSnapshot.exists()) {
+        if (gpsSnapshot.exists()) {
 
             const attempts =
-                gpsAttemptSnapshot.val();
+                gpsSnapshot.val();
 
             const updatedAttempts = {};
 
             for (const attemptID in attempts) {
 
                 updatedAttempts[attemptID] = {
+
                     ...attempts[attemptID],
 
                     employeeId: newID,
 
                     name: name,
+
+                    college: college,
 
                     type: newType,
 
@@ -480,9 +543,9 @@ async function updateEmployee() {
 
         }
 
-        // ==================================
+        // ======================================
         // DELETE OLD EMPLOYEE RECORD
-        // ==================================
+        // ======================================
 
         await remove(
             ref(db, "employees/" + empID)
@@ -520,8 +583,8 @@ async function updateEmployee() {
 
 }
 
-// ==============================
+// ==========================================
 // LOAD EMPLOYEE
-// ==============================
+// ==========================================
 
 loadEmployee();
