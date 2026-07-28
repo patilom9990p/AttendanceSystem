@@ -3,14 +3,25 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
 
-<title>Leave Requests</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<link rel="icon" type="image/png" href="images/logo.png">
+    <title>Leave Requests</title>
 
-<link rel="stylesheet" href="css/style.css">
+    <link
+        rel="icon"
+        type="image/png"
+        href="images/logo.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
@@ -18,81 +29,135 @@
 
 <header class="app-header">
 
-<div class="header-overlay"></div>
+    <div class="header-overlay"></div>
 
-<div class="header-content">
+    <div class="header-content">
 
-<img src="images/logo.png" class="logo">
+        <img
+            src="images/logo.png"
+            class="logo"
+            alt="Company Logo"
+        >
 
-<div class="company-text">
+        <div class="company-text">
 
-<h1>WaveNxD Technologies Pvt. Ltd.</h1>
+            <h1>
+                WaveNxD Technologies Pvt. Ltd.
+            </h1>
 
-<p>Office Attendance Management System</p>
+            <p>
+                Office Attendance Management System
+            </p>
 
-</div>
+        </div>
 
-</div>
+    </div>
 
 </header>
 
 <div class="container">
 
-<h2>📝 Leave Requests</h2>
+    <h2>📝 Leave Requests</h2>
 
-<hr>
+    <hr>
 
-<div class="table-container">
+    <br>
 
-<table>
+    <!-- Company Filter -->
 
-<thead>
+    <label for="companyFilter">
+        <strong>Select Company</strong>
+    </label>
 
-<tr>
+    <br><br>
 
-<th>Employee ID</th>
-<th>Name</th>
-<th>Type</th>
-<th>Leave Date</th>
-<th>Reason</th>
-<th>Status</th>
-<th>Action</th>
+    <select id="companyFilter">
 
-</tr>
+        <option value="All">
+            All Companies
+        </option>
 
-</thead>
+        <option value="WaveNxD">
+            WaveNxD
+        </option>
 
-<tbody id="leaveTable">
+        <option value="Nexa Prime">
+            Nexa Prime
+        </option>
 
-</tbody>
+    </select>
 
-</table>
+    <br><br>
+
+    <!-- Leave Requests Table -->
+
+    <div class="table-container">
+
+        <table id="leaveRequestsTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>Employee ID</th>
+
+                    <th>Name</th>
+
+                    <th>Type</th>
+
+                    <th>Company</th>
+
+                    <th>Leave Date</th>
+
+                    <th>Reason</th>
+
+                    <th>Status</th>
+
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="leaveTable">
+
+                <tr>
+
+                    <td colspan="8">
+                        Loading leave requests...
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <br>
+
+    <button
+        type="button"
+        onclick="location.href='adminDashboard.html'"
+    >
+        ⬅ Back
+    </button>
 
 </div>
 
-<br>
-
-<button onclick="location.href='adminDashboard.html'">
-
-⬅ Back
-
-</button>
-
-</div>
-
-<script type="module" src="js/adminLeaveRequests.js"></script>
+<script
+    type="module"
+    src="js/adminLeaveRequests.js"
+></script>
 
 <footer class="footer">
 
-<p>
-
-© 2026 Version 1.0
-
-&nbsp; | &nbsp;
-
-Developed by <strong>OM S PATIL</strong>
-
-</p>
+    <p>
+        © 2026 Version 1.0
+        &nbsp; | &nbsp;
+        Developed by <strong>OM S PATIL</strong>
+    </p>
 
 </footer>
 
