@@ -36,6 +36,42 @@ if (!empID) {
 }
 
 // ==============================
+// GET COMPANY PREFIX
+// ==============================
+
+function getCompanyPrefix(company) {
+
+    if (company === "WaveNxD") {
+        return "WNX";
+    }
+
+    if (company === "Nexa Prime") {
+        return "NXP";
+    }
+
+    return null;
+
+}
+
+// ==============================
+// GET TYPE PREFIX
+// ==============================
+
+function getTypePrefix(type) {
+
+    if (type === "Employee") {
+        return "EMP";
+    }
+
+    if (type === "Intern") {
+        return "INT";
+    }
+
+    return null;
+
+}
+
+// ==============================
 // LOAD EMPLOYEE DETAILS
 // ==============================
 
@@ -65,7 +101,6 @@ async function loadEmployee() {
 
         typeInput.value = data.type || "Employee";
 
-        // Load company
         companyInput.value =
             data.company || "WaveNxD";
 
@@ -74,7 +109,10 @@ async function loadEmployee() {
 
         console.error(error);
 
-        alert("Unable to load employee.\n\n" + error.message);
+        alert(
+            "Unable to load employee.\n\n" +
+            error.message
+        );
 
     }
 
@@ -84,7 +122,10 @@ async function loadEmployee() {
 // UPDATE BUTTON
 // ==============================
 
-updateBtn.addEventListener("click", updateEmployee);
+updateBtn.addEventListener(
+    "click",
+    updateEmployee
+);
 
 // ==============================
 // UPDATE EMPLOYEE
@@ -98,16 +139,30 @@ async function updateEmployee() {
 
     const newType = typeInput.value;
 
-    const company = companyInput.value;
+    const newCompany = companyInput.value;
 
     if (
         name === "" ||
         college === "" ||
         newType === "" ||
-        company === ""
+        newCompany === ""
     ) {
 
         alert("Please fill all fields.");
+
+        return;
+
+    }
+
+    const companyPrefix =
+        getCompanyPrefix(newCompany);
+
+    const typePrefix =
+        getTypePrefix(newType);
+
+    if (!companyPrefix || !typePrefix) {
+
+        alert("Invalid company or employee type.");
 
         return;
 
@@ -132,59 +187,108 @@ async function updateEmployee() {
 
         const oldData = empSnapshot.val();
 
+        const oldCompany =
+            oldData.company || "WaveNxD";
+
+        const typeChanged =
+            oldData.type !== newType;
+
+        const companyChanged =
+            oldCompany !== newCompany;
+
         // ==================================
-        // SAME EMPLOYEE TYPE
+        // COMPANY AND TYPE ARE NOT CHANGED
         // ==================================
 
-        if (oldData.type === newType) {
+        if (!typeChanged && !companyChanged) {
 
             await update(
                 ref(db, "employees/" + empID),
                 {
                     name: name,
-                    college: college,
-                    type: newType,
-                    company: company,
 
-                    // Preserve login details
+                    college: college,
+
+                    type: newType,
+
+                    company: newCompany,
+
                     password:
                         oldData.password || "123456",
 
                     active:
                         oldData.active !== undefined
                             ? oldData.active
-                            : true
+                            : true,
+
+                    updatedAt: Date.now()
                 }
             );
 
-            alert("Employee Updated Successfully.");
+            alert(
+                "Employee Updated Successfully."
+            );
 
-            window.location.href = "viewAttendance.html";
+            window.location.href =
+                "viewAttendance.html";
 
             return;
 
         }
 
         // ==================================
-        // EMPLOYEE TYPE CHANGED
+        // COMPANY OR TYPE CHANGED
         // ==================================
 
-        const confirmChange = confirm(
-            "Employee type has changed.\n\n" +
-            "The Employee ID will also change.\n\n" +
-            "Do you want to continue?"
-        );
+        let changeMessage =
+            "Employee information has changed.\n\n";
+
+        if (companyChanged && typeChanged) {
+
+            changeMessage +=
+                "Company and employee type were changed.";
+
+        } else if (companyChanged) {
+
+            changeMessage +=
+                "Employee company was changed.";
+
+        } else {
+
+            changeMessage +=
+                "Employee type was changed.";
+
+        }
+
+        changeMessage +=
+            "\n\nThe Employee ID will also change." +
+            "\n\nDo you want to continue?";
+
+        const confirmChange =
+            confirm(changeMessage);
 
         if (!confirmChange) {
 
-            updateBtn.disabled = false;
-            updateBtn.textContent = "💾 Update Employee";
-
             return;
 
         }
 
-        // Read all employees
+        // ==================================
+        // CREATE NEW PREFIX
+        // ==================================
+
+        const fullPrefix =
+            companyPrefix + "-" + typePrefix;
+
+        // Examples:
+        // WNX-EMP
+        // WNX-INT
+        // NXP-EMP
+        // NXP-INT
+
+        // ==================================
+        // READ ALL EMPLOYEES
+        // ==================================
 
         const allEmpSnapshot = await get(
             ref(db, "employees")
@@ -195,21 +299,17 @@ async function updateEmployee() {
                 ? allEmpSnapshot.val()
                 : {};
 
-        const prefix =
-            newType === "Employee"
-                ? "EMP"
-                : "INT";
-
         let maxNumber = 0;
 
         for (const id in employees) {
 
-            if (id.startsWith(prefix)) {
+            if (id.startsWith(fullPrefix)) {
 
-                const number = parseInt(
-                    id.substring(3),
-                    10
-                );
+                const numberPart =
+                    id.substring(fullPrefix.length);
+
+                const number =
+                    parseInt(numberPart, 10);
 
                 if (
                     !isNaN(number) &&
@@ -224,12 +324,39 @@ async function updateEmployee() {
 
         }
 
+        // ==================================
+        // GENERATE NEW EMPLOYEE ID
+        // ==================================
+
         const newID =
-            prefix +
+            fullPrefix +
             String(maxNumber + 1).padStart(3, "0");
 
+        // Example:
+        // WNX-EMP001
+        // NXP-INT001
+
         // ==================================
-        // CREATE UPDATED EMPLOYEE RECORD
+        // CHECK NEW ID DOES NOT EXIST
+        // ==================================
+
+        const newEmployeeSnapshot = await get(
+            ref(db, "employees/" + newID)
+        );
+
+        if (newEmployeeSnapshot.exists()) {
+
+            alert(
+                "Generated Employee ID already exists.\n\n" +
+                "Please try again."
+            );
+
+            return;
+
+        }
+
+        // ==================================
+        // CREATE NEW EMPLOYEE RECORD
         // ==================================
 
         await set(
@@ -243,7 +370,7 @@ async function updateEmployee() {
 
                 type: newType,
 
-                company: company,
+                company: newCompany,
 
                 password:
                     oldData.password || "123456",
@@ -307,17 +434,41 @@ async function updateEmployee() {
         // ==================================
 
         const gpsAttemptSnapshot = await get(
-            ref(db, "unauthorizedAttempts/" + empID)
+            ref(
+                db,
+                "unauthorizedAttempts/" + empID
+            )
         );
 
         if (gpsAttemptSnapshot.exists()) {
+
+            const attempts =
+                gpsAttemptSnapshot.val();
+
+            const updatedAttempts = {};
+
+            for (const attemptID in attempts) {
+
+                updatedAttempts[attemptID] = {
+                    ...attempts[attemptID],
+
+                    employeeId: newID,
+
+                    name: name,
+
+                    type: newType,
+
+                    company: newCompany
+                };
+
+            }
 
             await set(
                 ref(
                     db,
                     "unauthorizedAttempts/" + newID
                 ),
-                gpsAttemptSnapshot.val()
+                updatedAttempts
             );
 
             await remove(
@@ -339,10 +490,13 @@ async function updateEmployee() {
 
         alert(
             "Employee Updated Successfully.\n\n" +
-            "New Employee ID: " + newID
+            "Old Employee ID: " + empID +
+            "\nNew Employee ID: " + newID +
+            "\n\nThe employee must use the new ID to log in."
         );
 
-        window.location.href = "viewAttendance.html";
+        window.location.href =
+            "viewAttendance.html";
 
     }
     catch (error) {
@@ -358,12 +512,16 @@ async function updateEmployee() {
     finally {
 
         updateBtn.disabled = false;
-        updateBtn.textContent = "💾 Update Employee";
+
+        updateBtn.textContent =
+            "💾 Update Employee";
 
     }
 
 }
 
-// Load employee details
+// ==============================
+// LOAD EMPLOYEE
+// ==============================
 
 loadEmployee();
