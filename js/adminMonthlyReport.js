@@ -1,344 +1,757 @@
-import { db, ref, get } from "./firebase.js";
+import {
+    db,
+    ref,
+    get
+} from "./firebase.js";
 
-// Check Admin Login
+// ==============================
+// CHECK ADMIN LOGIN
+// ==============================
 
-if (sessionStorage.getItem("adminLoggedIn") !== "true") {
-
+if (
+    sessionStorage.getItem("adminLoggedIn") !== "true"
+) {
     window.location.href = "adminLogin.html";
-
 }
 
-const monthPicker = document.getElementById("monthPicker");
+// ==============================
+// HTML ELEMENTS
+// ==============================
 
-const tableBody = document.getElementById("reportBody");
+const monthPicker =
+    document.getElementById("monthPicker");
 
-// Current Month
+const companyFilter =
+    document.getElementById("companyFilter");
 
-monthPicker.value = new Date().toISOString().slice(0, 7);
-document.getElementById("loadBtn").addEventListener("click", loadReport);
+const tableBody =
+    document.getElementById("reportBody");
+
+const loadBtn =
+    document.getElementById("loadBtn");
+
+const exportExcelBtn =
+    document.getElementById("exportCSVBtn");
+
+// ==============================
+// CURRENT MONTH
+// ==============================
+
+monthPicker.value =
+    new Date().toISOString().slice(0, 7);
+
+// ==============================
+// PAGE EVENTS
+// ==============================
+
+loadBtn.addEventListener(
+    "click",
+    loadReport
+);
+
+exportExcelBtn.addEventListener(
+    "click",
+    exportExcel
+);
+
+companyFilter.addEventListener(
+    "change",
+    loadReport
+);
+
+monthPicker.addEventListener(
+    "change",
+    loadReport
+);
 
 loadReport();
+
+// ==============================
+// LOAD MONTHLY REPORT
+// ==============================
+
 async function loadReport() {
 
-    tableBody.innerHTML = "";
+    const month =
+        monthPicker.value;
 
-    const month = monthPicker.value;
+    const selectedCompany =
+        companyFilter.value;
 
-    const empSnapshot = await get(ref(db, "employees"));
-    const attSnapshot = await get(ref(db, "attendance"));
+    if (!month) {
 
-    if (!empSnapshot.exists()) return;
+        alert("Please select a month.");
 
-    const employees = empSnapshot.val();
-    const attendance = attSnapshot.exists() ? attSnapshot.val() : {};
-
-    const [year, monthNum] = month.split("-");
-    const totalDays = new Date(parseInt(year), parseInt(monthNum), 0).getDate();
-
-    for (const empID in employees) {
-
-        const emp = employees[empID];
-
-        let present = 0;
-let leave = 0;
-let totalSeconds = 0;
-
-        for (let day = 1; day <= totalDays; day++) {
-
-            const date =
-                month + "-" + String(day).padStart(2, "0");
-
-            if (attendance[empID] && attendance[empID][date]) {
-
-                const record = attendance[empID][date];
-
-               if (record.status === "Present") {
-
-    present++;
-
-    if (record.workingHours) {
-
-        const p = record.workingHours.split(":");
-
-        totalSeconds +=
-            parseInt(p[0]) * 3600 +
-            parseInt(p[1]) * 60 +
-            parseInt(p[2]);
-
-    }
-
-}
-else if (record.status === "Leave") {
-
-    leave++;
-
-}
-
-            }
-
-        }
-
-        const absent = totalDays - present - leave;
-
-        const percent =
-            ((present / totalDays) * 100).toFixed(2) + "%";
-
-        let average = "--";
-
-        if (present > 0) {
-
-            const avg = Math.floor(totalSeconds / present);
-
-            average =
-                String(Math.floor(avg / 3600)).padStart(2, "0") + ":" +
-                String(Math.floor((avg % 3600) / 60)).padStart(2, "0") + ":" +
-                String(avg % 60).padStart(2, "0");
-
-        }
-
-       tableBody.innerHTML += `
-<tr>
-    <td>${empID}</td>
-    <td>${emp.name}</td>
-    <td>${emp.type}</td>
-    <td>${present}</td>
-    <td>${leave}</td>
-    <td>${absent}</td>
-    <td>${percent}</td>
-    <td>${average}</td>
-</tr>`;
-    }
-
-}
-document.getElementById("exportCSVBtn").addEventListener("click", exportExcel);
-
-async function exportExcel() {
-
-    const month = monthPicker.value;
-
-    const empSnapshot = await get(ref(db, "employees"));
-    const attSnapshot = await get(ref(db, "attendance"));
-
-    if (!empSnapshot.exists()) {
-        alert("No employees found.");
         return;
     }
 
-    const employees = empSnapshot.val();
-    const attendance = attSnapshot.exists() ? attSnapshot.val() : {};
-    console.log("Employees:", employees);
-console.log("Attendance:", attendance);
-console.log("Month:", month);
-    let summaryData = [];
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="9">
+                Loading report...
+            </td>
+        </tr>
+    `;
 
-    summaryData.push([
-    "Employee ID",
-    "Name",
-    "Type",
-    "Present Days",
-    "Leave Days",
-    "Absent Days",
-    "Attendance %",
-    "Average Working Hours"
-]);
+    try {
 
-    let dailyData = [];
+        const empSnapshot = await get(
+            ref(db, "employees")
+        );
 
-    dailyData.push([
-        "Employee ID",
-        "Name",
-        "Type",
-        "Date",
-        "Day",
-        "Status",
-        "Check In",
-        "Check Out",
-        "Working Hours"
-    ]);
+        const attSnapshot = await get(
+            ref(db, "attendance")
+        );
 
-    const [year, monthNum] = month.split("-");
+        if (!empSnapshot.exists()) {
 
-    const totalDays =
-        new Date(parseInt(year), parseInt(monthNum), 0).getDate();
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9">
+                        No employees found.
+                    </td>
+                </tr>
+            `;
 
-    for (const empID in employees) {
-        
-    console.log("Checking Employee:", empID);
-console.log(attendance[empID]);
-        const emp = employees[empID];
+            return;
+        }
 
-        let present = 0;
-let leave = 0;
-let totalSeconds = 0;
+        const employees =
+            empSnapshot.val();
 
-        for (let day = 1; day <= totalDays; day++) {
+        const attendance =
+            attSnapshot.exists()
+                ? attSnapshot.val()
+                : {};
 
-            const date =
-                month +
-                "-" +
-                String(day).padStart(2, "0");
+        const [year, monthNum] =
+            month.split("-");
 
-            const jsDate = new Date(date);
+        const totalDays =
+            new Date(
+                Number(year),
+                Number(monthNum),
+                0
+            ).getDate();
 
-            const dayName =
-                jsDate.toLocaleDateString("en-US", {
-                    weekday: "long"
-                });
+        tableBody.innerHTML = "";
 
-            let status = "Absent";
-            let checkIn = "--";
-            let checkOut = "--";
-            let workingHours = "--";
+        let employeeCount = 0;
+
+        const employeeIDs =
+            Object.keys(employees).sort();
+
+        for (const empID of employeeIDs) {
+
+            const emp =
+                employees[empID];
+
+            const employeeCompany =
+                emp.company || "WaveNxD";
+
+            // ==========================
+            // COMPANY FILTER
+            // ==========================
 
             if (
-                attendance[empID] &&
-                attendance[empID][date]
+                selectedCompany !== "All" &&
+                employeeCompany !== selectedCompany
+            ) {
+                continue;
+            }
+
+            employeeCount++;
+
+            let present = 0;
+            let leave = 0;
+            let totalSeconds = 0;
+
+            for (
+                let day = 1;
+                day <= totalDays;
+                day++
             ) {
 
-                const record =
-                    attendance[empID][date];
+                const date =
+                    month +
+                    "-" +
+                    String(day).padStart(2, "0");
 
-                status =
-                    record.status || "Present";
+                if (
+                    attendance[empID] &&
+                    attendance[empID][date]
+                ) {
 
-                checkIn =
-                    record.checkIn || "--";
+                    const record =
+                        attendance[empID][date];
 
-                checkOut =
-                    record.checkOut || "--";
+                    const status =
+                        record.status || "Present";
 
-                workingHours =
-                    record.workingHours || "--";
+                    if (status === "Present") {
 
-           if (status === "Present") {
+                        present++;
 
-    present++;
+                        totalSeconds +=
+                            workingHoursToSeconds(
+                                record.workingHours
+                            );
 
-    if (record.workingHours) {
+                    }
+                    else if (status === "Leave") {
 
-        const p = record.workingHours.split(":");
+                        leave++;
 
-        totalSeconds +=
-            parseInt(p[0]) * 3600 +
-            parseInt(p[1]) * 60 +
-            parseInt(p[2]);
+                    }
+
+                }
+
+            }
+
+            const absent =
+                Math.max(
+                    0,
+                    totalDays - present - leave
+                );
+
+            const percent =
+                (
+                    (present / totalDays) *
+                    100
+                ).toFixed(2) + "%";
+
+            const average =
+                present > 0
+                    ? secondsToTime(
+                        Math.floor(
+                            totalSeconds / present
+                        )
+                    )
+                    : "--";
+
+            tableBody.innerHTML += `
+                <tr>
+
+                    <td>
+                        ${escapeHTML(empID)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            emp.name || "--"
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            emp.type || "--"
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            employeeCompany
+                        )}
+                    </td>
+
+                    <td>${present}</td>
+
+                    <td>${leave}</td>
+
+                    <td>${absent}</td>
+
+                    <td>
+                        ${escapeHTML(percent)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(average)}
+                    </td>
+
+                </tr>
+            `;
+
+        }
+
+        if (employeeCount === 0) {
+
+            const message =
+                selectedCompany === "All"
+                    ? "No employees found."
+                    : "No employees found for " +
+                      selectedCompany + ".";
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9">
+                        ${escapeHTML(message)}
+                    </td>
+                </tr>
+            `;
+
+        }
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9">
+                    Unable to load monthly report.
+                </td>
+            </tr>
+        `;
+
+        alert(
+            "Unable to load report.\n\n" +
+            error.message
+        );
 
     }
 
 }
-else if (status === "Leave") {
 
-    leave++;
+// ==============================
+// EXPORT EXCEL
+// ==============================
 
-}
+async function exportExcel() {
+
+    const month =
+        monthPicker.value;
+
+    const selectedCompany =
+        companyFilter.value;
+
+    if (!month) {
+
+        alert("Please select a month.");
+
+        return;
+    }
+
+    if (typeof XLSX === "undefined") {
+
+        alert(
+            "Excel library is not loaded. " +
+            "Please refresh the page."
+        );
+
+        return;
+    }
+
+    exportExcelBtn.disabled = true;
+    exportExcelBtn.textContent =
+        "⏳ Generating Excel...";
+
+    try {
+
+        const empSnapshot = await get(
+            ref(db, "employees")
+        );
+
+        const attSnapshot = await get(
+            ref(db, "attendance")
+        );
+
+        if (!empSnapshot.exists()) {
+
+            alert("No employees found.");
+
+            return;
+        }
+
+        const employees =
+            empSnapshot.val();
+
+        const attendance =
+            attSnapshot.exists()
+                ? attSnapshot.val()
+                : {};
+
+        const [year, monthNum] =
+            month.split("-");
+
+        const totalDays =
+            new Date(
+                Number(year),
+                Number(monthNum),
+                0
+            ).getDate();
+
+        const summaryData = [
+            [
+                "Employee ID",
+                "Name",
+                "Type",
+                "Company",
+                "Present Days",
+                "Leave Days",
+                "Absent Days",
+                "Attendance %",
+                "Average Working Hours"
+            ]
+        ];
+
+        const dailyData = [
+            [
+                "Employee ID",
+                "Name",
+                "Type",
+                "Company",
+                "Date",
+                "Day",
+                "Status",
+                "Check In",
+                "Check Out",
+                "Working Hours"
+            ]
+        ];
+
+        let employeeCount = 0;
+
+        const employeeIDs =
+            Object.keys(employees).sort();
+
+        for (const empID of employeeIDs) {
+
+            const emp =
+                employees[empID];
+
+            const employeeCompany =
+                emp.company || "WaveNxD";
+
+            // ==========================
+            // COMPANY FILTER
+            // ==========================
+
+            if (
+                selectedCompany !== "All" &&
+                employeeCompany !== selectedCompany
+            ) {
+                continue;
+            }
+
+            employeeCount++;
+
+            let present = 0;
+            let leave = 0;
+            let totalSeconds = 0;
+
+            for (
+                let day = 1;
+                day <= totalDays;
+                day++
+            ) {
+
+                const date =
+                    month +
+                    "-" +
+                    String(day).padStart(2, "0");
+
+                const jsDate =
+                    new Date(
+                        Number(year),
+                        Number(monthNum) - 1,
+                        day
+                    );
+
+                const dayName =
+                    jsDate.toLocaleDateString(
+                        "en-US",
+                        {
+                            weekday: "long"
+                        }
+                    );
+
+                let status = "Absent";
+                let checkIn = "--";
+                let checkOut = "--";
+                let workingHours = "--";
+
+                if (
+                    attendance[empID] &&
+                    attendance[empID][date]
+                ) {
+
+                    const record =
+                        attendance[empID][date];
+
+                    status =
+                        record.status || "Present";
+
+                    checkIn =
+                        record.checkIn || "--";
+
+                    checkOut =
+                        record.checkOut || "--";
+
+                    workingHours =
+                        record.workingHours || "--";
+
+                    if (status === "Present") {
+
+                        present++;
+
+                        totalSeconds +=
+                            workingHoursToSeconds(
+                                record.workingHours
+                            );
+
+                    }
+                    else if (status === "Leave") {
+
+                        leave++;
+
+                    }
+
+                }
+
+                dailyData.push([
+                    empID,
+                    emp.name || "--",
+                    emp.type || "--",
+                    employeeCompany,
+                    date,
+                    dayName,
+                    status,
+                    checkIn,
+                    checkOut,
+                    workingHours
+                ]);
 
             }
 
-            dailyData.push([
+            const absent =
+                Math.max(
+                    0,
+                    totalDays - present - leave
+                );
+
+            const attendancePercent =
+                (
+                    (present / totalDays) *
+                    100
+                ).toFixed(2) + "%";
+
+            const average =
+                present > 0
+                    ? secondsToTime(
+                        Math.floor(
+                            totalSeconds / present
+                        )
+                    )
+                    : "--";
+
+            summaryData.push([
                 empID,
-                emp.name,
-                emp.type,
-                date,
-                dayName,
-                status,
-                checkIn,
-                checkOut,
-                workingHours
+                emp.name || "--",
+                emp.type || "--",
+                employeeCompany,
+                present,
+                leave,
+                absent,
+                attendancePercent,
+                average
             ]);
 
         }
 
-        const absent =
-    totalDays - present - leave;
+        if (employeeCount === 0) {
 
-        const attendancePercent =
-            ((present / totalDays) * 100).toFixed(2) + "%";
+            alert(
+                selectedCompany === "All"
+                    ? "No employees found."
+                    : "No employees found for " +
+                      selectedCompany + "."
+            );
 
-        let average = "--";
-
-        if (present > 0) {
-
-            const avg =
-                Math.floor(totalSeconds / present);
-
-            const h =
-                Math.floor(avg / 3600);
-
-            const m =
-                Math.floor((avg % 3600) / 60);
-
-            const s =
-                avg % 60;
-
-            average =
-                String(h).padStart(2, "0") + ":" +
-                String(m).padStart(2, "0") + ":" +
-                String(s).padStart(2, "0");
-
+            return;
         }
 
-       summaryData.push([
-    empID,
-    emp.name,
-    emp.type,
-    present,
-    leave,
-    absent,
-    attendancePercent,
-    average
-]);
+        // ==========================
+        // CREATE WORKBOOK
+        // ==========================
+
+        const workbook =
+            XLSX.utils.book_new();
+
+        // Summary sheet
+        const summarySheet =
+            XLSX.utils.aoa_to_sheet(
+                summaryData
+            );
+
+        summarySheet["!cols"] = [
+            { wch: 18 },
+            { wch: 25 },
+            { wch: 15 },
+            { wch: 18 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 16 },
+            { wch: 24 }
+        ];
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            summarySheet,
+            "Summary"
+        );
+
+        // Daily attendance sheet
+        const dailySheet =
+            XLSX.utils.aoa_to_sheet(
+                dailyData
+            );
+
+        dailySheet["!cols"] = [
+            { wch: 18 },
+            { wch: 25 },
+            { wch: 15 },
+            { wch: 18 },
+            { wch: 14 },
+            { wch: 14 },
+            { wch: 14 },
+            { wch: 14 },
+            { wch: 14 },
+            { wch: 20 }
+        ];
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            dailySheet,
+            "Daily Attendance"
+        );
+
+        // ==========================
+        // FILE NAME
+        // ==========================
+
+        const companyFileName =
+            selectedCompany === "All"
+                ? "All_Companies"
+                : selectedCompany
+                    .replaceAll(" ", "_")
+                    .replaceAll("/", "_");
+
+        const fileName =
+            companyFileName +
+            "_Attendance_Report_" +
+            month +
+            ".xlsx";
+
+        XLSX.writeFile(
+            workbook,
+            fileName
+        );
 
     }
-        // Create Workbook
-    const wb = XLSX.utils.book_new();
+    catch (error) {
 
-    // Summary Sheet
-    const wsSummary =
-        XLSX.utils.aoa_to_sheet(summaryData);
+        console.error(error);
 
-   wsSummary["!cols"] = [
-    { wch: 15 }, // Employee ID
-    { wch: 25 }, // Name
-    { wch: 15 }, // Type
-    { wch: 15 }, // Present
-    { wch: 15 }, // Leave
-    { wch: 15 }, // Absent
-    { wch: 15 }, // Attendance %
-    { wch: 22 }  // Average Hours
-];
+        alert(
+            "Unable to export Excel file.\n\n" +
+            error.message
+        );
 
-    XLSX.utils.book_append_sheet(
-        wb,
-        wsSummary,
-        "Summary"
+    }
+    finally {
+
+        exportExcelBtn.disabled = false;
+
+        exportExcelBtn.textContent =
+            "📥 Export Excel";
+
+    }
+
+}
+
+// ==============================
+// WORKING HOURS TO SECONDS
+// ==============================
+
+function workingHoursToSeconds(
+    workingHours
+) {
+
+    if (!workingHours) {
+        return 0;
+    }
+
+    const parts =
+        String(workingHours)
+            .split(":")
+            .map(Number);
+
+    if (
+        parts.length < 2 ||
+        parts.some(Number.isNaN)
+    ) {
+        return 0;
+    }
+
+    const hours =
+        parts[0] || 0;
+
+    const minutes =
+        parts[1] || 0;
+
+    const seconds =
+        parts[2] || 0;
+
+    return (
+        hours * 3600 +
+        minutes * 60 +
+        seconds
     );
 
-    // Daily Attendance Sheet
-    const wsDaily =
-        XLSX.utils.aoa_to_sheet(dailyData);
+}
 
-    wsDaily["!cols"] = [
-        { wch: 15 },
-        { wch: 25 },
-        { wch: 12 },
-        { wch: 15 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 18 }
-    ];
+// ==============================
+// SECONDS TO HH:MM:SS
+// ==============================
 
-    XLSX.utils.book_append_sheet(
-        wb,
-        wsDaily,
-        "Daily Attendance"
+function secondsToTime(totalSeconds) {
+
+    const hours =
+        Math.floor(
+            totalSeconds / 3600
+        );
+
+    const minutes =
+        Math.floor(
+            (totalSeconds % 3600) / 60
+        );
+
+    const seconds =
+        totalSeconds % 60;
+
+    return (
+        String(hours).padStart(2, "0") +
+        ":" +
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(seconds).padStart(2, "0")
     );
 
-    // Download Excel File
-    XLSX.writeFile(
-        wb,
-        `Attendance_Report_${month}.xlsx`
-    );
+}
+
+// ==============================
+// BASIC HTML PROTECTION
+// ==============================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 
 }
