@@ -1,175 +1,534 @@
-import { db, ref, get, update } from "./firebase.js";
+import {
+    db,
+    ref,
+    get,
+    update
+} from "./firebase.js";
 
 // =============================
-// Check Admin Login
+// CHECK ADMIN LOGIN
 // =============================
-if (sessionStorage.getItem("adminLoggedIn") !== "true") {
+
+if (
+    sessionStorage.getItem("adminLoggedIn") !== "true"
+) {
     window.location.href = "adminLogin.html";
 }
 
-const leaveTable = document.getElementById("leaveTable");
+// =============================
+// HTML ELEMENTS
+// =============================
+
+const leaveTable =
+    document.getElementById("leaveTable");
+
+const companyFilter =
+    document.getElementById("companyFilter");
 
 // =============================
-// Load Leave Requests
+// FILTER EVENT
 // =============================
+
+companyFilter.addEventListener(
+    "change",
+    loadRequests
+);
+
+// =============================
+// LOAD LEAVE REQUESTS
+// =============================
+
 async function loadRequests() {
 
-    leaveTable.innerHTML = "";
-
-    const snapshot = await get(ref(db, "leaveRequests"));
-
-    if (!snapshot.exists()) {
-
-        leaveTable.innerHTML = `
+    leaveTable.innerHTML = `
         <tr>
-            <td colspan="7">No Leave Requests Found</td>
+            <td colspan="8">
+                Loading leave requests...
+            </td>
         </tr>
-        `;
+    `;
 
-        return;
-    }
+    const selectedCompany =
+        companyFilter.value;
 
-    const employees = snapshot.val();
+    try {
 
-    // Collect all requests into one array
-    let allRequests = [];
+        const leaveSnapshot =
+            await get(
+                ref(db, "leaveRequests")
+            );
 
-    for (const empID in employees) {
+        const employeeSnapshot =
+            await get(
+                ref(db, "employees")
+            );
 
-        for (const requestID in employees[empID]) {
+        if (!leaveSnapshot.exists()) {
 
-            allRequests.push({
-                empID,
-                requestID,
-                ...employees[empID][requestID]
-            });
-
-        }
-
-    }
-
-    // Latest request first
-    allRequests.sort((a, b) => b.timestamp - a.timestamp);
-
-    allRequests.forEach(req => {
-
-        let statusColor = "orange";
-
-        if (req.status === "Approved")
-            statusColor = "green";
-
-        if (req.status === "Rejected")
-            statusColor = "red";
-
-        let actionButtons = "";
-
-        if (req.status === "Pending") {
-
-            actionButtons = `
-                <button onclick="approveRequest('${req.empID}','${req.requestID}')">
-                    ✅ Approve
-                </button>
-
-                <button onclick="rejectRequest('${req.empID}','${req.requestID}')">
-                    ❌ Reject
-                </button>
+            leaveTable.innerHTML = `
+                <tr>
+                    <td colspan="8">
+                        No Leave Requests Found
+                    </td>
+                </tr>
             `;
 
-        } else {
+            return;
+        }
 
-            actionButtons = "-";
+        const leaveRequests =
+            leaveSnapshot.val();
+
+        const employees =
+            employeeSnapshot.exists()
+                ? employeeSnapshot.val()
+                : {};
+
+        const allRequests = [];
+
+        // =============================
+        // COLLECT ALL REQUESTS
+        // =============================
+
+        for (const empID in leaveRequests) {
+
+            const employee =
+                employees[empID] || {};
+
+            const employeeCompany =
+                employee.company ||
+                leaveRequests[empID].company ||
+                "WaveNxD";
+
+            // Company filter
+            if (
+                selectedCompany !== "All" &&
+                employeeCompany !== selectedCompany
+            ) {
+                continue;
+            }
+
+            for (
+                const requestID in leaveRequests[empID]
+            ) {
+
+                const request =
+                    leaveRequests[empID][requestID];
+
+                // Skip invalid data
+                if (
+                    !request ||
+                    typeof request !== "object"
+                ) {
+                    continue;
+                }
+
+                allRequests.push({
+
+                    empID,
+
+                    requestID,
+
+                    employeeId:
+                        request.employeeId ||
+                        empID,
+
+                    name:
+                        request.name ||
+                        employee.name ||
+                        "--",
+
+                    type:
+                        request.type ||
+                        employee.type ||
+                        "--",
+
+                    company:
+                        request.company ||
+                        employeeCompany ||
+                        "--",
+
+                    leaveDate:
+                        request.leaveDate ||
+                        "--",
+
+                    reason:
+                        request.reason ||
+                        "--",
+
+                    status:
+                        request.status ||
+                        "Pending",
+
+                    timestamp:
+                        request.timestamp ||
+                        0
+
+                });
+
+            }
 
         }
 
-        leaveTable.innerHTML += `
+        // =============================
+        // NO REQUESTS FOR FILTER
+        // =============================
 
-        <tr>
+        if (allRequests.length === 0) {
 
-            <td>${req.employeeId}</td>
+            const message =
+                selectedCompany === "All"
+                    ? "No Leave Requests Found"
+                    : "No Leave Requests Found for " +
+                      selectedCompany;
 
-            <td>${req.name}</td>
+            leaveTable.innerHTML = `
+                <tr>
+                    <td colspan="8">
+                        ${escapeHTML(message)}
+                    </td>
+                </tr>
+            `;
 
-            <td>${req.type}</td>
+            return;
 
-            <td>${req.leaveDate}</td>
+        }
 
-            <td>${req.reason}</td>
+        // =============================
+        // LATEST REQUEST FIRST
+        // =============================
 
-            <td style="font-weight:bold;color:${statusColor};">
-                ${req.status}
-            </td>
+        allRequests.sort(
+            (a, b) =>
+                Number(b.timestamp) -
+                Number(a.timestamp)
+        );
 
-            <td>${actionButtons}</td>
+        leaveTable.innerHTML = "";
 
-        </tr>
+        // =============================
+        // DISPLAY REQUESTS
+        // =============================
 
+        for (const req of allRequests) {
+
+            let statusColor = "orange";
+
+            if (req.status === "Approved") {
+                statusColor = "green";
+            }
+
+            if (req.status === "Rejected") {
+                statusColor = "red";
+            }
+
+            let actionButtons = "-";
+
+            if (req.status === "Pending") {
+
+                actionButtons = `
+                    <button
+                        onclick="approveRequest(
+                            '${escapeJavaScript(req.empID)}',
+                            '${escapeJavaScript(req.requestID)}'
+                        )"
+                    >
+                        ✅ Approve
+                    </button>
+
+                    <button
+                        onclick="rejectRequest(
+                            '${escapeJavaScript(req.empID)}',
+                            '${escapeJavaScript(req.requestID)}'
+                        )"
+                    >
+                        ❌ Reject
+                    </button>
+                `;
+
+            }
+
+            leaveTable.innerHTML += `
+                <tr>
+
+                    <td>
+                        ${escapeHTML(req.employeeId)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(req.name)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(req.type)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(req.company)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(req.leaveDate)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(req.reason)}
+                    </td>
+
+                    <td
+                        style="
+                            font-weight: bold;
+                            color: ${statusColor};
+                        "
+                    >
+                        ${escapeHTML(req.status)}
+                    </td>
+
+                    <td>
+                        ${actionButtons}
+                    </td>
+
+                </tr>
+            `;
+
+        }
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        leaveTable.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    Unable to load leave requests.
+                </td>
+            </tr>
         `;
 
-    });
+        alert(
+            "Unable to load leave requests.\n\n" +
+            error.message
+        );
+
+    }
 
 }
 
 // =============================
-// Approve Leave
+// APPROVE LEAVE
 // =============================
-window.approveRequest = async (empID, requestID) => {
 
-  const requestSnapshot = await get(
-    ref(db, "leaveRequests/" + empID + "/" + requestID)
-);
+window.approveRequest =
+async function (
+    empID,
+    requestID
+) {
 
-const request = requestSnapshot.val();
-
-await update(
-    ref(db, "leaveRequests/" + empID + "/" + requestID),
-    {
-        status: "Approved",
-        approvedBy: "Admin",
-        approvedTime: new Date().toLocaleString()
-    }
-);
-
-// Create Attendance Record
-await update(
-    ref(db, "attendance/" + empID + "/" + request.leaveDate),
-    {
-        status: "Leave",
-        checkIn: "",
-        checkOut: "",
-        workingHours: "",
-        leaveApproved: true
-    }
-);
-
-alert("Leave Approved");
-
-loadRequests();
-
-    alert("Leave Approved");
-
-    loadRequests();
-
-};
-
-// =============================
-// Reject Leave
-// =============================
-window.rejectRequest = async (empID, requestID) => {
-
-    await update(
-        ref(db, "leaveRequests/" + empID + "/" + requestID),
-        {
-            status: "Rejected",
-            approvedBy: "Admin",
-            approvedTime: new Date().toLocaleString()
-        }
+    const confirmApprove = confirm(
+        "Are you sure you want to approve this leave request?"
     );
 
-    alert("Leave Rejected");
+    if (!confirmApprove) {
+        return;
+    }
 
-    loadRequests();
+    try {
+
+        const requestSnapshot =
+            await get(
+                ref(
+                    db,
+                    "leaveRequests/" +
+                    empID +
+                    "/" +
+                    requestID
+                )
+            );
+
+        if (!requestSnapshot.exists()) {
+
+            alert(
+                "Leave request not found."
+            );
+
+            return;
+        }
+
+        const request =
+            requestSnapshot.val();
+
+        if (!request.leaveDate) {
+
+            alert(
+                "Leave date is missing."
+            );
+
+            return;
+        }
+
+        // Update leave request
+        await update(
+            ref(
+                db,
+                "leaveRequests/" +
+                empID +
+                "/" +
+                requestID
+            ),
+            {
+                status: "Approved",
+                approvedBy: "Admin",
+                approvedTime:
+                    new Date().toLocaleString()
+            }
+        );
+
+        // Create attendance leave record
+        await update(
+            ref(
+                db,
+                "attendance/" +
+                empID +
+                "/" +
+                request.leaveDate
+            ),
+            {
+                status: "Leave",
+                checkIn: "",
+                checkOut: "",
+                workingHours: "",
+                leaveApproved: true,
+                leaveRequestId:
+                    requestID
+            }
+        );
+
+        alert(
+            "Leave Approved Successfully"
+        );
+
+        loadRequests();
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to approve leave.\n\n" +
+            error.message
+        );
+
+    }
 
 };
 
-// Load page
+// =============================
+// REJECT LEAVE
+// =============================
+
+window.rejectRequest =
+async function (
+    empID,
+    requestID
+) {
+
+    const confirmReject = confirm(
+        "Are you sure you want to reject this leave request?"
+    );
+
+    if (!confirmReject) {
+        return;
+    }
+
+    try {
+
+        const requestSnapshot =
+            await get(
+                ref(
+                    db,
+                    "leaveRequests/" +
+                    empID +
+                    "/" +
+                    requestID
+                )
+            );
+
+        if (!requestSnapshot.exists()) {
+
+            alert(
+                "Leave request not found."
+            );
+
+            return;
+        }
+
+        await update(
+            ref(
+                db,
+                "leaveRequests/" +
+                empID +
+                "/" +
+                requestID
+            ),
+            {
+                status: "Rejected",
+                rejectedBy: "Admin",
+                rejectedTime:
+                    new Date().toLocaleString()
+            }
+        );
+
+        alert(
+            "Leave Rejected Successfully"
+        );
+
+        loadRequests();
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to reject leave.\n\n" +
+            error.message
+        );
+
+    }
+
+};
+
+// =============================
+// HTML PROTECTION
+// =============================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+// =============================
+// JAVASCRIPT STRING PROTECTION
+// =============================
+
+function escapeJavaScript(value) {
+
+    return String(value)
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'");
+
+}
+
+// =============================
+// LOAD PAGE
+// =============================
+
 loadRequests();
