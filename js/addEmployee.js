@@ -2,12 +2,57 @@ import { db, ref, set, get } from "./firebase.js";
 
 const saveBtn = document.getElementById("saveBtn");
 
+// ==============================
+// COMPANY PREFIX
+// ==============================
+
+function getCompanyPrefix(company) {
+
+    if (company === "WaveNxD") {
+        return "WNX";
+    }
+
+    if (company === "Nexa Prime") {
+        return "NXP";
+    }
+
+    return null;
+}
+
+// ==============================
+// EMPLOYEE TYPE PREFIX
+// ==============================
+
+function getTypePrefix(type) {
+
+    if (type === "Employee") {
+        return "EMP";
+    }
+
+    if (type === "Intern") {
+        return "INT";
+    }
+
+    return null;
+}
+
+// ==============================
+// SAVE EMPLOYEE
+// ==============================
+
 saveBtn.addEventListener("click", async () => {
 
-    const name = document.getElementById("name").value.trim();
-    const college = document.getElementById("college").value.trim();
-    const type = document.getElementById("type").value;
-    const company = document.getElementById("company").value;
+    const name =
+        document.getElementById("name").value.trim();
+
+    const college =
+        document.getElementById("college").value.trim();
+
+    const type =
+        document.getElementById("type").value;
+
+    const company =
+        document.getElementById("company").value;
 
     if (
         name === "" ||
@@ -15,15 +60,35 @@ saveBtn.addEventListener("click", async () => {
         type === "" ||
         company === ""
     ) {
+
         alert("Please fill all fields.");
+
         return;
     }
 
+    const companyPrefix =
+        getCompanyPrefix(company);
+
+    const typePrefix =
+        getTypePrefix(type);
+
+    if (!companyPrefix || !typePrefix) {
+
+        alert("Invalid company or employee type.");
+
+        return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+
     try {
 
-        const snapshot = await get(ref(db, "employees"));
+        const snapshot =
+            await get(ref(db, "employees"));
 
-        const prefix = type === "Employee" ? "EMP" : "INT";
+        const fullPrefix =
+            companyPrefix + "-" + typePrefix;
 
         let maxNumber = 0;
 
@@ -33,11 +98,18 @@ saveBtn.addEventListener("click", async () => {
 
             for (const id in employees) {
 
-                if (id.startsWith(prefix)) {
+                if (id.startsWith(fullPrefix)) {
 
-                    const number = parseInt(id.substring(3));
+                    const numberPart =
+                        id.substring(fullPrefix.length);
 
-                    if (!isNaN(number) && number > maxNumber) {
+                    const number =
+                        parseInt(numberPart, 10);
+
+                    if (
+                        !isNaN(number) &&
+                        number > maxNumber
+                    ) {
 
                         maxNumber = number;
 
@@ -49,28 +121,33 @@ saveBtn.addEventListener("click", async () => {
 
         }
 
-        const nextNumber = maxNumber + 1;
+        const nextNumber =
+            maxNumber + 1;
 
         const empId =
-            prefix + String(nextNumber).padStart(3, "0");
+            fullPrefix +
+            String(nextNumber).padStart(3, "0");
 
-        await set(ref(db, "employees/" + empId), {
+        await set(
+            ref(db, "employees/" + empId),
+            {
+                employeeId: empId,
 
-            employeeId: empId,
+                name: name,
 
-            name: name,
+                college: college,
 
-            college: college,
+                type: type,
 
-            type: type,
+                company: company,
 
-            company: company,
+                password: "123456",
 
-            password: "123456",
+                active: true,
 
-            active: true
-
-        });
+                createdAt: Date.now()
+            }
+        );
 
         alert(
             "Employee Added Successfully!\n\n" +
@@ -79,14 +156,29 @@ saveBtn.addEventListener("click", async () => {
         );
 
         document.getElementById("name").value = "";
+
         document.getElementById("college").value = "";
+
         document.getElementById("type").selectedIndex = 0;
+
         document.getElementById("company").selectedIndex = 0;
 
     }
     catch (error) {
 
-        alert(error.message);
+        console.error(error);
+
+        alert(
+            "Unable to add employee.\n\n" +
+            error.message
+        );
+
+    }
+    finally {
+
+        saveBtn.disabled = false;
+
+        saveBtn.textContent = "Save Employee";
 
     }
 
