@@ -1,90 +1,55 @@
-import { db, ref, get, set, update, remove } from "./firebase.js";
+import {
+    db,
+    ref,
+    get,
+    set,
+    update,
+    remove
+} from "./firebase.js";
 
-// Get Employee ID from URL
+// ==============================
+// GET EMPLOYEE ID FROM URL
+// ==============================
+
 const params = new URLSearchParams(window.location.search);
 const empID = params.get("id");
 
-// Show Employee ID
-document.getElementById("empID").value = empID;
+const empIDInput = document.getElementById("empID");
+const nameInput = document.getElementById("name");
+const collegeInput = document.getElementById("college");
+const typeInput = document.getElementById("type");
+const companyInput = document.getElementById("company");
+const updateBtn = document.getElementById("updateBtn");
 
-// =======================
-// LOAD EMPLOYEE
-// =======================
+// Check Employee ID
+
+if (!empID) {
+
+    alert("Employee ID is missing.");
+
+    window.location.href = "viewAttendance.html";
+
+} else {
+
+    empIDInput.value = empID;
+
+}
+
+// ==============================
+// LOAD EMPLOYEE DETAILS
+// ==============================
 
 async function loadEmployee() {
 
     try {
 
-        const snapshot = await get(ref(db, "employees/" + empID));
+        const snapshot = await get(
+            ref(db, "employees/" + empID)
+        );
 
         if (!snapshot.exists()) {
+
             alert("Employee not found.");
-            return;
-        }
-
-        const data = snapshot.val();
-
-        document.getElementById("name").value = data.name;
-        document.getElementById("college").value = data.college;
-        document.getElementById("type").value = data.type;
-
-    } catch (error) {
-
-        alert(error.message);
-
-    }
-
-}
-
-loadEmployee();
-
-// =======================
-// UPDATE BUTTON
-// =======================
-
-document.getElementById("updateBtn").addEventListener("click", updateEmployee);
-
-// =======================
-// UPDATE EMPLOYEE
-// =======================
-
-async function updateEmployee() {
-
-    const name = document.getElementById("name").value.trim();
-    const college = document.getElementById("college").value.trim();
-    const newType = document.getElementById("type").value;
-
-    if (name === "" || college === "") {
-        alert("Please fill all fields.");
-        return;
-    }
-
-    try {
-
-        const empSnapshot = await get(ref(db, "employees/" + empID));
-
-        if (!empSnapshot.exists()) {
-            alert("Employee not found.");
-            return;
-        }
-
-        const oldData = empSnapshot.val();
-
-        // ==========================
-        // SAME TYPE
-        // ==========================
-
-        if (oldData.type === newType) {
-
-            await update(ref(db, "employees/" + empID), {
-
-                name: name,
-                college: college,
-                type: newType
-
-            });
-
-            alert("Employee Updated Successfully");
 
             window.location.href = "viewAttendance.html";
 
@@ -92,69 +57,216 @@ async function updateEmployee() {
 
         }
 
-        // ==========================
-        // TYPE CHANGED
-        // ==========================
+        const data = snapshot.val();
 
-        const confirmChange = confirm(
-            "Employee type changed.\n\nEmployee ID will also change.\n\nContinue?"
+        nameInput.value = data.name || "";
+
+        collegeInput.value = data.college || "";
+
+        typeInput.value = data.type || "Employee";
+
+        // Load company
+        companyInput.value =
+            data.company || "WaveNxD";
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        alert("Unable to load employee.\n\n" + error.message);
+
+    }
+
+}
+
+// ==============================
+// UPDATE BUTTON
+// ==============================
+
+updateBtn.addEventListener("click", updateEmployee);
+
+// ==============================
+// UPDATE EMPLOYEE
+// ==============================
+
+async function updateEmployee() {
+
+    const name = nameInput.value.trim();
+
+    const college = collegeInput.value.trim();
+
+    const newType = typeInput.value;
+
+    const company = companyInput.value;
+
+    if (
+        name === "" ||
+        college === "" ||
+        newType === "" ||
+        company === ""
+    ) {
+
+        alert("Please fill all fields.");
+
+        return;
+
+    }
+
+    updateBtn.disabled = true;
+    updateBtn.textContent = "Updating...";
+
+    try {
+
+        const empSnapshot = await get(
+            ref(db, "employees/" + empID)
         );
 
-        if (!confirmChange) return;
+        if (!empSnapshot.exists()) {
+
+            alert("Employee not found.");
+
+            return;
+
+        }
+
+        const oldData = empSnapshot.val();
+
+        // ==================================
+        // SAME EMPLOYEE TYPE
+        // ==================================
+
+        if (oldData.type === newType) {
+
+            await update(
+                ref(db, "employees/" + empID),
+                {
+                    name: name,
+                    college: college,
+                    type: newType,
+                    company: company,
+
+                    // Preserve login details
+                    password:
+                        oldData.password || "123456",
+
+                    active:
+                        oldData.active !== undefined
+                            ? oldData.active
+                            : true
+                }
+            );
+
+            alert("Employee Updated Successfully.");
+
+            window.location.href = "viewAttendance.html";
+
+            return;
+
+        }
+
+        // ==================================
+        // EMPLOYEE TYPE CHANGED
+        // ==================================
+
+        const confirmChange = confirm(
+            "Employee type has changed.\n\n" +
+            "The Employee ID will also change.\n\n" +
+            "Do you want to continue?"
+        );
+
+        if (!confirmChange) {
+
+            updateBtn.disabled = false;
+            updateBtn.textContent = "💾 Update Employee";
+
+            return;
+
+        }
 
         // Read all employees
-        const allEmpSnapshot = await get(ref(db, "employees"));
 
-        const employees = allEmpSnapshot.val();
+        const allEmpSnapshot = await get(
+            ref(db, "employees")
+        );
+
+        const employees =
+            allEmpSnapshot.exists()
+                ? allEmpSnapshot.val()
+                : {};
+
+        const prefix =
+            newType === "Employee"
+                ? "EMP"
+                : "INT";
 
         let maxNumber = 0;
 
-        const prefix = (newType === "Employee") ? "EMP" : "INT";
-
-        for (let id in employees) {
+        for (const id in employees) {
 
             if (id.startsWith(prefix)) {
 
-                const num = parseInt(id.substring(3));
+                const number = parseInt(
+                    id.substring(3),
+                    10
+                );
 
-                if (num > maxNumber)
-                    maxNumber = num;
+                if (
+                    !isNaN(number) &&
+                    number > maxNumber
+                ) {
+
+                    maxNumber = number;
+
+                }
 
             }
 
         }
 
         const newID =
-            prefix + String(maxNumber + 1).padStart(3, "0");
+            prefix +
+            String(maxNumber + 1).padStart(3, "0");
 
-        // Create new employee
+        // ==================================
+        // CREATE UPDATED EMPLOYEE RECORD
+        // ==================================
 
-   // ==========================
-// CREATE NEW EMPLOYEE / INTERN
-// ==========================
-console.log("Old Data:", oldData);
-console.log("New ID:", newID);
-console.log("Password:", oldData.password);
-console.log("Active:", oldData.active);
-await set(ref(db, "employees/" + newID), {
+        await set(
+            ref(db, "employees/" + newID),
+            {
+                employeeId: newID,
 
-    employeeId: newID,
-    name: name,
-    college: college,
-    type: newType,
+                name: name,
 
-    // Login Details
-    password: oldData.password ? oldData.password : "123456",
-    active: oldData.active !== undefined ? oldData.active : true
+                college: college,
 
-});
+                type: newType,
 
-        // ==========================
-        // MOVE ATTENDANCE
-        // ==========================
+                company: company,
 
-        const attendanceSnapshot =
-            await get(ref(db, "attendance/" + empID));
+                password:
+                    oldData.password || "123456",
+
+                active:
+                    oldData.active !== undefined
+                        ? oldData.active
+                        : true,
+
+                createdAt:
+                    oldData.createdAt || Date.now(),
+
+                updatedAt: Date.now()
+            }
+        );
+
+        // ==================================
+        // MOVE ATTENDANCE RECORDS
+        // ==================================
+
+        const attendanceSnapshot = await get(
+            ref(db, "attendance/" + empID)
+        );
 
         if (attendanceSnapshot.exists()) {
 
@@ -163,16 +275,71 @@ await set(ref(db, "employees/" + newID), {
                 attendanceSnapshot.val()
             );
 
-            await remove(ref(db, "attendance/" + empID));
+            await remove(
+                ref(db, "attendance/" + empID)
+            );
 
         }
 
-        // Delete old employee
+        // ==================================
+        // MOVE LEAVE REQUESTS
+        // ==================================
 
-        await remove(ref(db, "employees/" + empID));
+        const leaveSnapshot = await get(
+            ref(db, "leaveRequests/" + empID)
+        );
+
+        if (leaveSnapshot.exists()) {
+
+            await set(
+                ref(db, "leaveRequests/" + newID),
+                leaveSnapshot.val()
+            );
+
+            await remove(
+                ref(db, "leaveRequests/" + empID)
+            );
+
+        }
+
+        // ==================================
+        // MOVE UNAUTHORIZED GPS ATTEMPTS
+        // ==================================
+
+        const gpsAttemptSnapshot = await get(
+            ref(db, "unauthorizedAttempts/" + empID)
+        );
+
+        if (gpsAttemptSnapshot.exists()) {
+
+            await set(
+                ref(
+                    db,
+                    "unauthorizedAttempts/" + newID
+                ),
+                gpsAttemptSnapshot.val()
+            );
+
+            await remove(
+                ref(
+                    db,
+                    "unauthorizedAttempts/" + empID
+                )
+            );
+
+        }
+
+        // ==================================
+        // DELETE OLD EMPLOYEE RECORD
+        // ==================================
+
+        await remove(
+            ref(db, "employees/" + empID)
+        );
 
         alert(
-            "Employee Updated Successfully.\n\nNew Employee ID : " + newID
+            "Employee Updated Successfully.\n\n" +
+            "New Employee ID: " + newID
         );
 
         window.location.href = "viewAttendance.html";
@@ -180,8 +347,23 @@ await set(ref(db, "employees/" + newID), {
     }
     catch (error) {
 
-        alert(error.message);
+        console.error(error);
+
+        alert(
+            "Unable to update employee.\n\n" +
+            error.message
+        );
+
+    }
+    finally {
+
+        updateBtn.disabled = false;
+        updateBtn.textContent = "💾 Update Employee";
 
     }
 
 }
+
+// Load employee details
+
+loadEmployee();
