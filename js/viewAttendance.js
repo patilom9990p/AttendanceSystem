@@ -1,77 +1,143 @@
-import { db, ref, get, remove } from "./firebase.js";
+import {
+    db,
+    ref,
+    get,
+    remove
+} from "./firebase.js";
 
-const tableBody = document.getElementById("tableBody");
-const selectedDate = document.getElementById("selectedDate");
-const searchBox = document.getElementById("searchBox");
+const tableBody =
+    document.getElementById("tableBody");
 
-// Set today's date
-selectedDate.value = new Date().toISOString().split("T")[0];
+const selectedDate =
+    document.getElementById("selectedDate");
 
-// Load attendance on page load
+const searchBox =
+    document.getElementById("searchBox");
+
+// ==============================
+// SET TODAY'S DATE
+// ==============================
+
+selectedDate.value =
+    new Date().toISOString().split("T")[0];
+
+// ==============================
+// PAGE EVENTS
+// ==============================
+
 loadAttendance();
 
-// Reload when date changes
-selectedDate.addEventListener("change", loadAttendance);
+selectedDate.addEventListener(
+    "change",
+    loadAttendance
+);
 
-// Search Employee
-searchBox.addEventListener("keyup", function () {
+searchBox.addEventListener(
+    "keyup",
+    searchEmployees
+);
 
-    const search = searchBox.value.toLowerCase();
+// ==============================
+// SEARCH EMPLOYEE
+// ==============================
 
-    const rows = tableBody.getElementsByTagName("tr");
+function searchEmployees() {
 
-    for (let row of rows) {
+    const search =
+        searchBox.value
+            .trim()
+            .toLowerCase();
 
-        const employeeId = row.cells[0].innerText.toLowerCase();
-        const employeeName = row.cells[1].innerText.toLowerCase();
+    const rows =
+        tableBody.getElementsByTagName("tr");
 
-        if (
-            employeeId.includes(search) ||
-            employeeName.includes(search)
-        ) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
+    for (const row of rows) {
+
+        if (row.cells.length < 4) {
+            continue;
         }
+
+        const employeeId =
+            row.cells[0].innerText.toLowerCase();
+
+        const employeeName =
+            row.cells[1].innerText.toLowerCase();
+
+        const employeeType =
+            row.cells[2].innerText.toLowerCase();
+
+        const employeeCompany =
+            row.cells[3].innerText.toLowerCase();
+
+        const matched =
+            employeeId.includes(search) ||
+            employeeName.includes(search) ||
+            employeeType.includes(search) ||
+            employeeCompany.includes(search);
+
+        row.style.display =
+            matched ? "" : "none";
 
     }
 
-});
+}
 
-// =======================
+// ==============================
 // LOAD ATTENDANCE
-// =======================
+// ==============================
 
 async function loadAttendance() {
 
-    tableBody.innerHTML = "";
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="9">
+                Loading attendance...
+            </td>
+        </tr>
+    `;
 
     const date = selectedDate.value;
 
     try {
 
-        // Read Employees
-        const empSnapshot = await get(ref(db, "employees"));
+        // Read employees
+        const empSnapshot = await get(
+            ref(db, "employees")
+        );
 
         if (!empSnapshot.exists()) {
-            tableBody.innerHTML =
-                `<tr><td colspan="8">No Employees Found</td></tr>`;
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9">
+                        No Employees Found
+                    </td>
+                </tr>
+            `;
+
             return;
+
         }
 
         const employees = empSnapshot.val();
 
-        // Read Attendance
-        const attSnapshot = await get(ref(db, "attendance"));
+        // Read attendance
+        const attSnapshot = await get(
+            ref(db, "attendance")
+        );
 
-        let attendance = {};
+        const attendance =
+            attSnapshot.exists()
+                ? attSnapshot.val()
+                : {};
 
-        if (attSnapshot.exists()) {
-            attendance = attSnapshot.val();
-        }
+        tableBody.innerHTML = "";
 
-        // Create Table
-        for (let empID in employees) {
+        // Sort IDs alphabetically
+        const employeeIDs =
+            Object.keys(employees).sort();
+
+        for (const empID of employeeIDs) {
 
             const emp = employees[empID];
 
@@ -85,91 +151,180 @@ async function loadAttendance() {
                 attendance[empID][date]
             ) {
 
-                const data = attendance[empID][date];
+                const data =
+                    attendance[empID][date];
 
-                checkIn = data.checkIn || "--";
-                checkOut = data.checkOut || "--";
-                workingHours = data.workingHours || "--";
-                status = data.status || "Present";
+                checkIn =
+                    data.checkIn || "--";
+
+                checkOut =
+                    data.checkOut || "--";
+
+                workingHours =
+                    data.workingHours || "--";
+
+                status =
+                    data.status || "Present";
 
             }
 
             tableBody.innerHTML += `
-            <tr>
+                <tr>
 
-                <td>${empID}</td>
+                    <td>${escapeHTML(empID)}</td>
 
-                <td>${emp.name}</td>
+                    <td>
+                        ${escapeHTML(emp.name || "--")}
+                    </td>
 
-                <td>${emp.type}</td>
+                    <td>
+                        ${escapeHTML(emp.type || "--")}
+                    </td>
 
-                <td>${checkIn}</td>
+                    <td>
+                        ${escapeHTML(emp.company || "--")}
+                    </td>
 
-                <td>${checkOut}</td>
+                    <td>${escapeHTML(checkIn)}</td>
 
-                <td>${workingHours}</td>
+                    <td>${escapeHTML(checkOut)}</td>
 
-                <td>${status}</td>
+                    <td>
+                        ${escapeHTML(workingHours)}
+                    </td>
 
-               <td>
-    <button onclick="editEmployee('${empID}')">
-        ✏️ Edit
-    </button>
+                    <td>${escapeHTML(status)}</td>
 
-    <button onclick="deleteEmployee('${empID}')">
-        🗑 Delete
-    </button>
-</td>
+                    <td>
 
-            </tr>
+                        <button
+                            onclick="editEmployee('${empID}')"
+                        >
+                            ✏️ Edit
+                        </button>
+
+                        <button
+                            onclick="deleteEmployee('${empID}')"
+                        >
+                            🗑 Delete
+                        </button>
+
+                    </td>
+
+                </tr>
             `;
 
         }
 
+        searchEmployees();
+
     }
     catch (error) {
+
+        console.error(error);
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9">
+                    Unable to load attendance.
+                </td>
+            </tr>
+        `;
 
         alert(error.message);
 
     }
 
 }
+
+// ==============================
+// EDIT EMPLOYEE
+// ==============================
+
 window.editEmployee = function (empID) {
 
-    window.location.href = "editEmployee.html?id=" + empID;
+    window.location.href =
+        "editEmployee.html?id=" +
+        encodeURIComponent(empID);
 
 };
 
-// =======================
+// ==============================
 // DELETE EMPLOYEE
-// =======================
+// ==============================
 
-window.deleteEmployee = async function (empID) {
+window.deleteEmployee =
+async function (empID) {
 
     const confirmDelete = confirm(
-        "Are you sure you want to delete " + empID + " ?"
+        "Are you sure you want to delete " +
+        empID +
+        "?\n\n" +
+        "Employee data, attendance, leave requests " +
+        "and GPS attempt records will be deleted."
     );
 
-    if (!confirmDelete) return;
+    if (!confirmDelete) {
+        return;
+    }
 
     try {
 
-        // Delete Employee
-        await remove(ref(db, "employees/" + empID));
+        // Delete employee
+        await remove(
+            ref(db, "employees/" + empID)
+        );
 
-        // Delete Attendance
-        await remove(ref(db, "attendance/" + empID));
+        // Delete attendance
+        await remove(
+            ref(db, "attendance/" + empID)
+        );
 
-        alert(empID + " deleted successfully.");
+        // Delete leave requests
+        await remove(
+            ref(db, "leaveRequests/" + empID)
+        );
 
-        // Refresh Table
+        // Delete unauthorized GPS attempts
+        await remove(
+            ref(
+                db,
+                "unauthorizedAttempts/" + empID
+            )
+        );
+
+        alert(
+            empID +
+            " deleted successfully."
+        );
+
         loadAttendance();
 
     }
     catch (error) {
 
-        alert(error.message);
+        console.error(error);
+
+        alert(
+            "Unable to delete employee.\n\n" +
+            error.message
+        );
 
     }
 
 };
+
+// ==============================
+// BASIC HTML PROTECTION
+// ==============================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
