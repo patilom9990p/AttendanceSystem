@@ -32,9 +32,13 @@ async function verifyOfficeLocation() {
     return new Promise((resolve) => {
 
         if (!navigator.geolocation) {
+
             alert("Geolocation is not supported.");
+
             resolve(null);
+
             return;
+
         }
 
         navigator.geolocation.getCurrentPosition(
@@ -46,9 +50,13 @@ async function verifyOfficeLocation() {
                     const gpsSnapshot = await get(ref(db, "gpsSettings"));
 
                     if (!gpsSnapshot.exists()) {
+
                         alert("Office GPS Settings not found.");
+
                         resolve(null);
+
                         return;
+
                     }
 
                     const office = gpsSnapshot.val();
@@ -57,43 +65,53 @@ async function verifyOfficeLocation() {
                     const userLon = position.coords.longitude;
 
                     const distance = calculateDistance(
+
                         office.latitude,
                         office.longitude,
+
                         userLat,
                         userLon
+
                     );
 
-                    if (distance > office.radius) {
+                   if (distance > office.radius) {
 
-                        await saveUnauthorizedAttempt(
-                            "Check In / Check Out",
-                            {
-                                latitude: userLat,
-                                longitude: userLon,
-                                distance: distance
-                            }
-                        );
+    await saveUnauthorizedAttempt("Check In / Check Out", {
 
-                        alert(
-    "❌ Attendance Denied!\n\n" +
-    "You are outside the office area.\n\n" +
-    "Distance : " + distance.toFixed(2) + " meters."
-);
+        latitude: userLat,
 
-                        resolve(null);
-                        return;
-                    }
+        longitude: userLon,
+
+        distance: distance
+
+    });
+
+    alert(
+        "❌ Attendance Denied!\n\n" +
+        "You are outside the office area.\n\n" +
+        "Distance : " + distance.toFixed(2) + " meters.\n\n" +
+        "Your location has been recorded and sent to the Administrator."
+    );
+
+    resolve(null);
+
+    return;
+
+}
 
                     resolve({
+
                         latitude: userLat,
                         longitude: userLon,
                         distance: distance
+
                     });
 
                 }
                 catch (error) {
 
                     alert(error.message);
+
                     resolve(null);
 
                 }
@@ -103,6 +121,7 @@ async function verifyOfficeLocation() {
             () => {
 
                 alert("Location permission denied.");
+
                 resolve(null);
 
             }
@@ -173,17 +192,20 @@ async function loadProfile() {
 
         
 
-        document.getElementById("empName").textContent =
-            "Name : " + employee.name;
+       document.getElementById("empName").textContent =
+    "Name : " + employee.name;
 
-        document.getElementById("empID").textContent =
-            "Employee ID : " + employee.employeeId;
+document.getElementById("empID").textContent =
+    "Employee ID : " + employee.employeeId;
 
-        document.getElementById("college").textContent =
-            "College : " + employee.college;
+document.getElementById("college").textContent =
+    "College : " + employee.college;
 
-        document.getElementById("type").textContent =
-            "Type : " + employee.type;
+document.getElementById("type").textContent =
+    "Type : " + employee.type;
+
+document.getElementById("company").textContent =
+    "Company : " + (employee.company || "--");
 
     }
     catch (error) {
@@ -368,3 +390,4 @@ checkOutBtn.onclick = async () => {
     loadTodayAttendance();
 
 };
+loadAttendanceHistory();
