@@ -14,6 +14,9 @@ const selectedDate =
 const searchBox =
     document.getElementById("searchBox");
 
+const companyFilter =
+    document.getElementById("companyFilter");
+
 // ==============================
 // SET TODAY'S DATE
 // ==============================
@@ -28,6 +31,11 @@ selectedDate.value =
 loadAttendance();
 
 selectedDate.addEventListener(
+    "change",
+    loadAttendance
+);
+
+companyFilter.addEventListener(
     "change",
     loadAttendance
 );
@@ -53,7 +61,7 @@ function searchEmployees() {
 
     for (const row of rows) {
 
-        if (row.cells.length < 4) {
+        if (row.cells.length < 9) {
             continue;
         }
 
@@ -96,7 +104,11 @@ async function loadAttendance() {
         </tr>
     `;
 
-    const date = selectedDate.value;
+    const date =
+        selectedDate.value;
+
+    const selectedCompany =
+        companyFilter.value;
 
     try {
 
@@ -119,7 +131,8 @@ async function loadAttendance() {
 
         }
 
-        const employees = empSnapshot.val();
+        const employees =
+            empSnapshot.val();
 
         // Read attendance
         const attSnapshot = await get(
@@ -133,13 +146,33 @@ async function loadAttendance() {
 
         tableBody.innerHTML = "";
 
-        // Sort IDs alphabetically
         const employeeIDs =
             Object.keys(employees).sort();
 
+        let visibleEmployeeCount = 0;
+
         for (const empID of employeeIDs) {
 
-            const emp = employees[empID];
+            const emp =
+                employees[empID];
+
+            const employeeCompany =
+                emp.company || "WaveNxD";
+
+            // ==========================
+            // COMPANY FILTER
+            // ==========================
+
+            if (
+                selectedCompany !== "All" &&
+                employeeCompany !== selectedCompany
+            ) {
+
+                continue;
+
+            }
+
+            visibleEmployeeCount++;
 
             let checkIn = "--";
             let checkOut = "--";
@@ -171,40 +204,56 @@ async function loadAttendance() {
             tableBody.innerHTML += `
                 <tr>
 
-                    <td>${escapeHTML(empID)}</td>
-
                     <td>
-                        ${escapeHTML(emp.name || "--")}
+                        ${escapeHTML(empID)}
                     </td>
 
                     <td>
-                        ${escapeHTML(emp.type || "--")}
+                        ${escapeHTML(
+                            emp.name || "--"
+                        )}
                     </td>
 
                     <td>
-                        ${escapeHTML(emp.company || "--")}
+                        ${escapeHTML(
+                            emp.type || "--"
+                        )}
                     </td>
-
-                    <td>${escapeHTML(checkIn)}</td>
-
-                    <td>${escapeHTML(checkOut)}</td>
 
                     <td>
-                        ${escapeHTML(workingHours)}
+                        ${escapeHTML(
+                            employeeCompany
+                        )}
                     </td>
 
-                    <td>${escapeHTML(status)}</td>
+                    <td>
+                        ${escapeHTML(checkIn)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(checkOut)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            workingHours
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(status)}
+                    </td>
 
                     <td>
 
                         <button
-                            onclick="editEmployee('${empID}')"
+                            onclick="editEmployee('${escapeJavaScript(empID)}')"
                         >
                             ✏️ Edit
                         </button>
 
                         <button
-                            onclick="deleteEmployee('${empID}')"
+                            onclick="deleteEmployee('${escapeJavaScript(empID)}')"
                         >
                             🗑 Delete
                         </button>
@@ -213,6 +262,26 @@ async function loadAttendance() {
 
                 </tr>
             `;
+
+        }
+
+        if (visibleEmployeeCount === 0) {
+
+            const companyMessage =
+                selectedCompany === "All"
+                    ? "No Employees Found"
+                    : "No employees found for " +
+                      selectedCompany;
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9">
+                        ${escapeHTML(companyMessage)}
+                    </td>
+                </tr>
+            `;
+
+            return;
 
         }
 
@@ -231,7 +300,10 @@ async function loadAttendance() {
             </tr>
         `;
 
-        alert(error.message);
+        alert(
+            "Unable to load attendance.\n\n" +
+            error.message
+        );
 
     }
 
@@ -241,7 +313,8 @@ async function loadAttendance() {
 // EDIT EMPLOYEE
 // ==============================
 
-window.editEmployee = function (empID) {
+window.editEmployee =
+function (empID) {
 
     window.location.href =
         "editEmployee.html?id=" +
@@ -326,5 +399,17 @@ function escapeHTML(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+
+}
+
+// ==============================
+// JAVASCRIPT STRING PROTECTION
+// ==============================
+
+function escapeJavaScript(value) {
+
+    return String(value)
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'");
 
 }
