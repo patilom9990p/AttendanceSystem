@@ -2,16 +2,31 @@
 <html lang="en">
 
 <head>
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Employee Dashboard</title>
+    <meta charset="UTF-8">
 
-<link rel="icon" type="image/png" href="images/logo.png">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<link rel="stylesheet" href="css/style.css">
+    <title>Employee Login</title>
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="images/logo.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
@@ -23,13 +38,21 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
     <div class="header-content">
 
-        <img src="images/logo.png" class="logo">
+        <img
+            src="images/logo.png"
+            class="logo"
+            alt="WaveNxD Logo"
+        >
 
         <div class="company-text">
 
-            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+            <h1>
+                WaveNxD Technologies Pvt. Ltd.
+            </h1>
 
-            <p>Office Attendance Management System</p>
+            <p>
+                Office Attendance Management System
+            </p>
 
         </div>
 
@@ -43,10 +66,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
     <div class="login-left">
 
-        <div class="login-icon">
-            👨‍💼
-        </div>
-
         <h2>Employee Portal</h2>
 
         <p>
@@ -55,7 +74,13 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
         <br><br>
 
-        <div style="text-align:left;line-height:2;font-size:18px;">
+        <div
+            style="
+                text-align: left;
+                line-height: 2;
+                font-size: 18px;
+            "
+        >
 
             ✅ Daily Attendance<br>
 
@@ -69,54 +94,72 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
     </div>
 
-
     <!-- Right Panel -->
 
     <div class="login-right">
 
-        <h2 style="margin-bottom:30px;color:#0B3D91;">
+        <h2
+            style="
+                margin-bottom: 30px;
+                color: #0B3D91;
+            "
+        >
             Welcome Employee 👋
         </h2>
 
-        <label>Employee ID</label>
+        <label for="employeeId">
+            Employee ID
+        </label>
 
         <input
             type="text"
             id="employeeId"
-            placeholder="Enter Employee ID">
+            placeholder="Enter Employee ID"
+            autocomplete="username"
+        >
 
         <br><br>
 
-        <label>Password</label>
+        <label for="password">
+            Password
+        </label>
 
         <input
             type="password"
             id="password"
-            placeholder="Enter Password">
+            placeholder="Enter Password"
+            autocomplete="current-password"
+        >
 
         <br><br>
 
         <button
+            type="button"
             id="loginBtn"
-            class="login-btn">
-
+            class="login-btn"
+        >
             🔓 Login
-
         </button>
 
+        <br><br>
+
         <button
+            type="button"
             onclick="location.href='index.html'"
-            class="back-btn">
-
+            class="back-btn"
+        >
             ← Back
-
         </button>
 
     </div>
 
 </div>
 
-<script type="module" src="js/employeeLogin.js"></script>
+<script
+    type="module"
+    src="js/employeeLogin.js"
+></script>
+
 <footer class="footer">
 
     <p>
@@ -126,6 +169,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     </p>
 
 </footer>
+
 </body>
 
 </html>
