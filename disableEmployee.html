@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Disable Employee Account</title>
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="images/logo.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+</head>
+
+<body>
+
+<header class="app-header">
+
+    <div class="header-overlay"></div>
+
+    <div class="header-content">
+
+        <img
+            src="images/logo.png"
+            class="logo"
+            alt="Company Logo"
+        >
+
+        <div class="company-text">
+
+            <h1>
+                WaveNxD Technologies Pvt. Ltd.
+            </h1>
+
+            <p>
+                Office Attendance Management System
+            </p>
+
+        </div>
+
+    </div>
+
+</header>
+
+<div class="container">
+
+    <h2>🔒 Disable Employee Account</h2>
+
+    <hr>
+
+    <p>
+        Generate a complete employee PDF record and disable the
+        account when the employee or intern leaves the company.
+    </p>
+
+    <br>
+
+    <label for="companyFilter">
+        <strong>Select Company</strong>
+    </label>
+
+    <br><br>
+
+    <select id="companyFilter">
+
+        <option value="">
+            Select Company
+        </option>
+
+        <option value="WaveNxD">
+            WaveNxD
+        </option>
+
+        <option value="Nexa Prime">
+            Nexa Prime
+        </option>
+
+    </select>
+
+    <br><br>
+
+    <label for="employeeSelect">
+        <strong>Select Employee / Intern</strong>
+    </label>
+
+    <br><br>
+
+    <select id="employeeSelect" disabled>
+
+        <option value="">
+            First select a company
+        </option>
+
+    </select>
+
+    <br><br>
+
+    <div id="employeeDetails">
+
+        <p>
+            <strong>Employee ID:</strong>
+            <span id="displayEmployeeId">--</span>
+        </p>
+
+        <p>
+            <strong>Name:</strong>
+            <span id="displayName">--</span>
+        </p>
+
+        <p>
+            <strong>Type:</strong>
+            <span id="displayType">--</span>
+        </p>
+
+        <p>
+            <strong>Company:</strong>
+            <span id="displayCompany">--</span>
+        </p>
+
+        <p>
+            <strong>Account Status:</strong>
+            <span id="displayStatus">--</span>
+        </p>
+
+    </div>
+
+    <br>
+
+    <label for="exitDate">
+        <strong>Last Working Date / Exit Date</strong>
+    </label>
+
+    <br><br>
+
+    <input
+        type="date"
+        id="exitDate"
+    >
+
+    <br><br>
+
+    <label for="exitReason">
+        <strong>Reason for Leaving</strong>
+    </label>
+
+    <br><br>
+
+    <textarea
+        id="exitReason"
+        rows="5"
+        placeholder="Enter resignation, contract completion or other reason"
+    ></textarea>
+
+    <br><br>
+
+    <button
+        type="button"
+        id="disableBtn"
+        disabled
+    >
+        📄 Generate PDF and Disable Account
+    </button>
+
+    <br><br>
+
+    <p id="statusMessage"></p>
+
+    <hr>
+
+    <button
+        type="button"
+        onclick="location.href='systemSettings.html'"
+    >
+        ⬅ Back
+    </button>
+
+</div>
+
+<!-- jsPDF -->
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+></script>
+
+<!-- jsPDF AutoTable -->
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"
+></script>
+
+<script
+    type="module"
+    src="js/disableEmployee.js"
+></script>
+
+<footer class="footer">
+
+    <p>
+        © 2026 Version 1.0
+        &nbsp; | &nbsp;
+        Developed by <strong>OM S PATIL</strong>
+    </p>
+
+</footer>
+
+</body>
+
+</html>
