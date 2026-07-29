@@ -298,9 +298,7 @@ async function verifyOfficeLocation(
                             "You are outside the office area.\n\n" +
                             "Distance: " +
                             distance.toFixed(2) +
-                            " metres.\n\n" +
-                            "Your location has been recorded " +
-                            "and sent to the administrator."
+                            " metres.\n\n" 
                         );
 
                         resolve(null);
