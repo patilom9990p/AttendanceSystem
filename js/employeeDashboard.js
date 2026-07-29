@@ -1,39 +1,192 @@
-import { set, update, push } from "./firebase.js";
-import { db, ref, get } from "./firebase.js";
-// =======================
-// GPS DISTANCE FUNCTION
-// =======================
+import {
+    db,
+    ref,
+    get,
+    set,
+    update,
+    push
+} from "./firebase.js";
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
+// =====================================
+// EMPLOYEE SESSION
+// =====================================
 
-    const R = 6371000; // Earth radius (meters)
+const empID =
+    sessionStorage.getItem("employeeID");
 
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
+if (!empID) {
+
+    window.location.href =
+        "employeeLogin.html";
+
+}
+
+// =====================================
+// HTML ELEMENTS
+// =====================================
+
+const checkInBtn =
+    document.getElementById("checkInBtn");
+
+const checkOutBtn =
+    document.getElementById("checkOutBtn");
+
+const logoutBtn =
+    document.getElementById("logoutBtn");
+
+// =====================================
+// CURRENT EMPLOYEE DATA
+// =====================================
+
+let currentEmployee = null;
+
+// =====================================
+// CHECK EMPLOYEE ACCOUNT
+// =====================================
+
+async function verifyEmployeeAccount() {
+
+    try {
+
+        const snapshot = await get(
+            ref(db, "employees/" + empID)
+        );
+
+        if (!snapshot.exists()) {
+
+            alert(
+                "Employee account not found."
+            );
+
+            logoutEmployee();
+
+            return null;
+
+        }
+
+        const employee =
+            snapshot.val();
+
+        // Block disabled employees
+        if (employee.active === false) {
+
+            alert(
+                "Your employee account has been disabled.\n\n" +
+                "Please contact the administrator."
+            );
+
+            logoutEmployee();
+
+            return null;
+
+        }
+
+        currentEmployee = employee;
+
+        return employee;
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to verify employee account.\n\n" +
+            error.message
+        );
+
+        return null;
+
+    }
+
+}
+
+// =====================================
+// LOGOUT EMPLOYEE
+// =====================================
+
+function logoutEmployee() {
+
+    sessionStorage.removeItem("employeeID");
+
+    sessionStorage.removeItem(
+        "employeeLoggedIn"
+    );
+
+    window.location.href =
+        "employeeLogin.html";
+
+}
+
+// =====================================
+// CALCULATE GPS DISTANCE
+// =====================================
+
+function calculateDistance(
+    lat1,
+    lon1,
+    lat2,
+    lon2
+) {
+
+    const R = 6371000;
+
+    const dLat =
+        (lat2 - lat1) *
+        Math.PI / 180;
+
+    const dLon =
+        (lon2 - lon1) *
+        Math.PI / 180;
 
     const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) *
-        Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        Math.sin(dLat / 2) *
+        Math.sin(dLat / 2) +
 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        Math.cos(
+            lat1 * Math.PI / 180
+        ) *
+
+        Math.cos(
+            lat2 * Math.PI / 180
+        ) *
+
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c =
+        2 *
+        Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+        );
 
     return R * c;
 
 }
 
-// =======================
-// VERIFY OFFICE GPS
-// =======================
+// =====================================
+// VERIFY OFFICE GPS LOCATION
+// =====================================
 
-async function verifyOfficeLocation() {
+async function verifyOfficeLocation(
+    action
+) {
+
+    const employee =
+        await verifyEmployeeAccount();
+
+    if (!employee) {
+        return null;
+    }
 
     return new Promise((resolve) => {
 
         if (!navigator.geolocation) {
 
-            alert("Geolocation is not supported.");
+            alert(
+                "Geolocation is not supported by this browser."
+            );
 
             resolve(null);
 
@@ -43,15 +196,23 @@ async function verifyOfficeLocation() {
 
         navigator.geolocation.getCurrentPosition(
 
-            async (position) => {
+            async function (position) {
 
                 try {
 
-                    const gpsSnapshot = await get(ref(db, "gpsSettings"));
+                    const gpsSnapshot =
+                        await get(
+                            ref(
+                                db,
+                                "gpsSettings"
+                            )
+                        );
 
                     if (!gpsSnapshot.exists()) {
 
-                        alert("Office GPS Settings not found.");
+                        alert(
+                            "Office GPS settings not found."
+                        );
 
                         resolve(null);
 
@@ -59,58 +220,117 @@ async function verifyOfficeLocation() {
 
                     }
 
-                    const office = gpsSnapshot.val();
+                    const office =
+                        gpsSnapshot.val();
 
-                    const userLat = position.coords.latitude;
-                    const userLon = position.coords.longitude;
+                    const officeLatitude =
+                        Number(
+                            office.latitude
+                        );
 
-                    const distance = calculateDistance(
+                    const officeLongitude =
+                        Number(
+                            office.longitude
+                        );
 
-                        office.latitude,
-                        office.longitude,
+                    const officeRadius =
+                        Number(
+                            office.radius
+                        );
 
-                        userLat,
-                        userLon
+                    if (
+                        Number.isNaN(
+                            officeLatitude
+                        ) ||
+                        Number.isNaN(
+                            officeLongitude
+                        ) ||
+                        Number.isNaN(
+                            officeRadius
+                        )
+                    ) {
 
-                    );
+                        alert(
+                            "Office GPS settings are invalid."
+                        );
 
-                   if (distance > office.radius) {
+                        resolve(null);
 
-    await saveUnauthorizedAttempt("Check In / Check Out", {
+                        return;
 
-        latitude: userLat,
+                    }
 
-        longitude: userLon,
+                    const userLatitude =
+                        position.coords.latitude;
 
-        distance: distance
+                    const userLongitude =
+                        position.coords.longitude;
 
-    });
+                    const distance =
+                        calculateDistance(
+                            officeLatitude,
+                            officeLongitude,
+                            userLatitude,
+                            userLongitude
+                        );
 
-    alert(
-        "❌ Attendance Denied!\n\n" +
-        "You are outside the office area.\n\n" +
-        "Distance : " + distance.toFixed(2) + " meters.\n\n" +
-        "Your location has been recorded and sent to the Administrator."
-    );
+                    if (
+                        distance >
+                        officeRadius
+                    ) {
 
-    resolve(null);
+                        await saveUnauthorizedAttempt(
+                            action,
+                            {
+                                latitude:
+                                    userLatitude,
 
-    return;
+                                longitude:
+                                    userLongitude,
 
-}
+                                distance:
+                                    distance
+                            }
+                        );
+
+                        alert(
+                            "Attendance Denied!\n\n" +
+                            "You are outside the office area.\n\n" +
+                            "Distance: " +
+                            distance.toFixed(2) +
+                            " metres.\n\n" +
+                            "Your location has been recorded " +
+                            "and sent to the administrator."
+                        );
+
+                        resolve(null);
+
+                        return;
+
+                    }
 
                     resolve({
 
-                        latitude: userLat,
-                        longitude: userLon,
-                        distance: distance
+                        latitude:
+                            userLatitude,
+
+                        longitude:
+                            userLongitude,
+
+                        distance:
+                            distance
 
                     });
 
                 }
                 catch (error) {
 
-                    alert(error.message);
+                    console.error(error);
+
+                    alert(
+                        "Unable to verify office location.\n\n" +
+                        error.message
+                    );
 
                     resolve(null);
 
@@ -118,12 +338,49 @@ async function verifyOfficeLocation() {
 
             },
 
-            () => {
+            function (error) {
 
-                alert("Location permission denied.");
+                let message =
+                    "Unable to access your location.";
+
+                if (
+                    error.code ===
+                    error.PERMISSION_DENIED
+                ) {
+
+                    message =
+                        "Location permission was denied.";
+
+                }
+                else if (
+                    error.code ===
+                    error.POSITION_UNAVAILABLE
+                ) {
+
+                    message =
+                        "Your location is currently unavailable.";
+
+                }
+                else if (
+                    error.code ===
+                    error.TIMEOUT
+                ) {
+
+                    message =
+                        "Location request timed out.";
+
+                }
+
+                alert(message);
 
                 resolve(null);
 
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
             }
 
         );
@@ -131,263 +388,708 @@ async function verifyOfficeLocation() {
     });
 
 }
-async function saveUnauthorizedAttempt(action, gps) {
 
-    const empSnapshot = await get(ref(db, "employees/" + empID));
+// =====================================
+// SAVE UNAUTHORISED ATTEMPT
+// =====================================
 
-    if (!empSnapshot.exists()) return;
+async function saveUnauthorizedAttempt(
+    action,
+    gps
+) {
 
-    const employee = empSnapshot.val();
+    try {
 
-    const attemptRef = push(
-        ref(db, "unauthorizedAttempts/" + empID)
-    );
+        const employee =
+            await verifyEmployeeAccount();
 
-    const now = new Date();
+        if (!employee) {
+            return;
+        }
 
-    await set(attemptRef, {
+        const attemptRef =
+            push(
+                ref(
+                    db,
+                    "unauthorizedAttempts/" +
+                    empID
+                )
+            );
 
-        employeeId: employee.employeeId,
+        const now =
+            new Date();
 
-        name: employee.name,
+        await set(
+            attemptRef,
+            {
 
-        type: employee.type,
+                employeeId:
+                    employee.employeeId ||
+                    empID,
 
-        action: action,
+                name:
+                    employee.name ||
+                    "--",
 
-        latitude: gps.latitude,
+                type:
+                    employee.type ||
+                    "--",
 
-        longitude: gps.longitude,
+                company:
+                    employee.company ||
+                    "--",
 
-        distance: Number(gps.distance.toFixed(2)),
+                action:
+                    action,
 
-        date: now.toLocaleDateString(),
+                latitude:
+                    gps.latitude,
 
-        time: now.toLocaleTimeString(),
+                longitude:
+                    gps.longitude,
 
-        timestamp: now.getTime()
+                distance:
+                    Number(
+                        gps.distance.toFixed(2)
+                    ),
 
-    });
+                date:
+                    now.toLocaleDateString(),
+
+                time:
+                    now.toLocaleTimeString(),
+
+                timestamp:
+                    now.getTime()
+
+            }
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "Unable to save GPS attempt:",
+            error
+        );
+
+    }
 
 }
 
-const empID = sessionStorage.getItem("employeeID");
-
-
+// =====================================
+// LOAD EMPLOYEE PROFILE
+// =====================================
 
 async function loadProfile() {
 
     try {
 
-        const snapshot = await get(ref(db, "employees/" + empID));
+        const employee =
+            await verifyEmployeeAccount();
 
-        
-
-        if (!snapshot.exists()) {
-            alert("Employee Not Found");
+        if (!employee) {
             return;
         }
 
-        const employee = snapshot.val();
+        document.getElementById(
+            "empName"
+        ).textContent =
+            "Name : " +
+            (employee.name || "--");
 
-        
+        document.getElementById(
+            "empID"
+        ).textContent =
+            "Employee ID : " +
+            (
+                employee.employeeId ||
+                empID
+            );
 
-       document.getElementById("empName").textContent =
-    "Name : " + employee.name;
+        document.getElementById(
+            "college"
+        ).textContent =
+            "College : " +
+            (employee.college || "--");
 
-document.getElementById("empID").textContent =
-    "Employee ID : " + employee.employeeId;
+        document.getElementById(
+            "type"
+        ).textContent =
+            "Type : " +
+            (employee.type || "--");
 
-document.getElementById("college").textContent =
-    "College : " + employee.college;
-
-document.getElementById("type").textContent =
-    "Type : " + employee.type;
-
-document.getElementById("company").textContent =
-    "Company : " + (employee.company || "--");
+        document.getElementById(
+            "company"
+        ).textContent =
+            "Company : " +
+            (employee.company || "--");
 
     }
     catch (error) {
 
-        alert(error.message);
+        console.error(error);
+
+        alert(
+            "Unable to load profile.\n\n" +
+            error.message
+        );
 
     }
 
 }
 
-loadProfile();
-setInterval(updateClock,1000);
+// =====================================
+// CLOCK
+// =====================================
 
-updateClock();
+function updateClock() {
 
-function updateClock(){
+    const now =
+        new Date();
 
-    const now = new Date();
+    document.getElementById(
+        "currentDate"
+    ).textContent =
+        "Date : " +
+        now.toLocaleDateString();
 
-    document.getElementById("currentDate").innerHTML =
-    "Date : " + now.toLocaleDateString();
-
-    document.getElementById("currentTime").innerHTML =
-    "Time : " + now.toLocaleTimeString();
+    document.getElementById(
+        "currentTime"
+    ).textContent =
+        "Time : " +
+        now.toLocaleTimeString();
 
 }
-loadTodayAttendance();
 
-async function loadTodayAttendance(){
+// =====================================
+// LOAD TODAY ATTENDANCE
+// =====================================
 
-    const today = new Date().toISOString().split("T")[0];
+async function loadTodayAttendance() {
 
-    const snapshot = await get(
-        ref(db,"attendance/"+empID+"/"+today)
+    try {
+
+        const employee =
+            await verifyEmployeeAccount();
+
+        if (!employee) {
+            return;
+        }
+
+        const today =
+            new Date()
+                .toISOString()
+                .split("T")[0];
+
+        const snapshot =
+            await get(
+                ref(
+                    db,
+                    "attendance/" +
+                    empID +
+                    "/" +
+                    today
+                )
+            );
+
+        if (!snapshot.exists()) {
+
+            document.getElementById(
+                "todayCheckIn"
+            ).textContent =
+                "Check In : --";
+
+            document.getElementById(
+                "todayCheckOut"
+            ).textContent =
+                "Check Out : --";
+
+            document.getElementById(
+                "todayWorkingHours"
+            ).textContent =
+                "Working Hours : --";
+
+            checkInBtn.disabled =
+                false;
+
+            checkOutBtn.disabled =
+                true;
+
+            return;
+
+        }
+
+        const data =
+            snapshot.val();
+
+        document.getElementById(
+            "todayCheckIn"
+        ).textContent =
+            "Check In : " +
+            (data.checkIn || "--");
+
+        document.getElementById(
+            "todayCheckOut"
+        ).textContent =
+            "Check Out : " +
+            (data.checkOut || "--");
+
+        document.getElementById(
+            "todayWorkingHours"
+        ).textContent =
+            "Working Hours : " +
+            (data.workingHours || "--");
+
+        if (
+            !data.checkOut
+        ) {
+
+            checkInBtn.disabled =
+                true;
+
+            checkOutBtn.disabled =
+                false;
+
+        }
+        else {
+
+            checkInBtn.disabled =
+                true;
+
+            checkOutBtn.disabled =
+                true;
+
+        }
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to load today's attendance.\n\n" +
+            error.message
+        );
+
+    }
+
+}
+
+// =====================================
+// CHECK IN
+// =====================================
+
+checkInBtn.addEventListener(
+    "click",
+    async function () {
+
+        const employee =
+            await verifyEmployeeAccount();
+
+        if (!employee) {
+            return;
+        }
+
+        checkInBtn.disabled =
+            true;
+
+        try {
+
+            const gps =
+                await verifyOfficeLocation(
+                    "Check In"
+                );
+
+            if (!gps) {
+
+                checkInBtn.disabled =
+                    false;
+
+                return;
+
+            }
+
+            const now =
+                new Date();
+
+            const today =
+                now
+                    .toISOString()
+                    .split("T")[0];
+
+            const attendanceRef =
+                ref(
+                    db,
+                    "attendance/" +
+                    empID +
+                    "/" +
+                    today
+                );
+
+            const existingSnapshot =
+                await get(
+                    attendanceRef
+                );
+
+            if (
+                existingSnapshot.exists()
+            ) {
+
+                alert(
+                    "You have already checked in today."
+                );
+
+                await loadTodayAttendance();
+
+                return;
+
+            }
+
+            await set(
+                attendanceRef,
+                {
+
+                    checkIn:
+                        now.toLocaleTimeString(),
+
+                    checkInTimestamp:
+                        now.getTime(),
+
+                    checkOut:
+                        "",
+
+                    checkOutTimestamp:
+                        0,
+
+                    workingHours:
+                        "",
+
+                    status:
+                        "Present",
+
+                    latitude:
+                        gps.latitude,
+
+                    longitude:
+                        gps.longitude,
+
+                    distance:
+                        Number(
+                            gps.distance.toFixed(2)
+                        ),
+
+                    gpsVerified:
+                        true
+
+                }
+            );
+
+            alert(
+                "Checked In Successfully"
+            );
+
+            await loadTodayAttendance();
+
+            if (
+                typeof loadAttendanceHistory ===
+                "function"
+            ) {
+
+                loadAttendanceHistory();
+
+            }
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            alert(
+                "Unable to check in.\n\n" +
+                error.message
+            );
+
+            checkInBtn.disabled =
+                false;
+
+        }
+
+    }
+);
+
+// =====================================
+// CHECK OUT
+// =====================================
+
+checkOutBtn.addEventListener(
+    "click",
+    async function () {
+
+        const employee =
+            await verifyEmployeeAccount();
+
+        if (!employee) {
+            return;
+        }
+
+        checkOutBtn.disabled =
+            true;
+
+        try {
+
+            const gps =
+                await verifyOfficeLocation(
+                    "Check Out"
+                );
+
+            if (!gps) {
+
+                checkOutBtn.disabled =
+                    false;
+
+                return;
+
+            }
+
+            const today =
+                new Date()
+                    .toISOString()
+                    .split("T")[0];
+
+            const attendanceRef =
+                ref(
+                    db,
+                    "attendance/" +
+                    empID +
+                    "/" +
+                    today
+                );
+
+            const snapshot =
+                await get(
+                    attendanceRef
+                );
+
+            if (!snapshot.exists()) {
+
+                alert(
+                    "No Check-In Record Found."
+                );
+
+                checkOutBtn.disabled =
+                    true;
+
+                return;
+
+            }
+
+            const data =
+                snapshot.val();
+
+            if (data.checkOut) {
+
+                alert(
+                    "You have already checked out today."
+                );
+
+                await loadTodayAttendance();
+
+                return;
+
+            }
+
+            const checkInTimestamp =
+                Number(
+                    data.checkInTimestamp
+                );
+
+            if (
+                !checkInTimestamp ||
+                Number.isNaN(
+                    checkInTimestamp
+                )
+            ) {
+
+                alert(
+                    "Check-in timestamp is invalid."
+                );
+
+                checkOutBtn.disabled =
+                    false;
+
+                return;
+
+            }
+
+            const now =
+                Date.now();
+
+            const difference =
+                Math.max(
+                    0,
+                    now -
+                    checkInTimestamp
+                );
+
+            const hours =
+                Math.floor(
+                    difference /
+                    3600000
+                );
+
+            const minutes =
+                Math.floor(
+                    (
+                        difference %
+                        3600000
+                    ) /
+                    60000
+                );
+
+            const seconds =
+                Math.floor(
+                    (
+                        difference %
+                        60000
+                    ) /
+                    1000
+                );
+
+            const workingHours =
+                String(hours)
+                    .padStart(2, "0") +
+                ":" +
+                String(minutes)
+                    .padStart(2, "0") +
+                ":" +
+                String(seconds)
+                    .padStart(2, "0");
+
+            await update(
+                attendanceRef,
+                {
+
+                    checkOut:
+                        new Date()
+                            .toLocaleTimeString(),
+
+                    checkOutTimestamp:
+                        now,
+
+                    workingHours:
+                        workingHours,
+
+                    checkOutLatitude:
+                        gps.latitude,
+
+                    checkOutLongitude:
+                        gps.longitude,
+
+                    checkOutDistance:
+                        Number(
+                            gps.distance.toFixed(2)
+                        )
+
+                }
+            );
+
+            alert(
+                "Checked Out Successfully"
+            );
+
+            await loadTodayAttendance();
+
+            if (
+                typeof loadAttendanceHistory ===
+                "function"
+            ) {
+
+                loadAttendanceHistory();
+
+            }
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            alert(
+                "Unable to check out.\n\n" +
+                error.message
+            );
+
+            checkOutBtn.disabled =
+                false;
+
+        }
+
+    }
+);
+
+// =====================================
+// LOGOUT BUTTON
+// =====================================
+
+logoutBtn.addEventListener(
+    "click",
+    function () {
+
+        sessionStorage.clear();
+
+        window.location.href =
+            "employeeLogin.html";
+
+    }
+);
+
+// =====================================
+// INITIAL PAGE LOAD
+// =====================================
+
+async function initializeDashboard() {
+
+    checkInBtn.disabled =
+        true;
+
+    checkOutBtn.disabled =
+        true;
+
+    const employee =
+        await verifyEmployeeAccount();
+
+    if (!employee) {
+        return;
+    }
+
+    await loadProfile();
+
+    await loadTodayAttendance();
+
+    if (
+        typeof loadAttendanceHistory ===
+        "function"
+    ) {
+
+        loadAttendanceHistory();
+
+    }
+
+    updateClock();
+
+    setInterval(
+        updateClock,
+        1000
     );
 
-    if(!snapshot.exists()){
-
-        document.getElementById("checkInBtn").disabled=false;
-        document.getElementById("checkOutBtn").disabled=true;
-
-        return;
-
-    }
-
-    const data = snapshot.val();
-
-    document.getElementById("todayCheckIn").innerHTML =
-    "Check In : " + data.checkIn;
-
-    document.getElementById("todayCheckOut").innerHTML =
-    "Check Out : " + (data.checkOut || "--");
-
-    document.getElementById("todayWorkingHours").innerHTML =
-    "Working Hours : " + (data.workingHours || "--");
-
-    if(data.checkOut===""){
-
-        checkInBtn.disabled=true;
-        checkOutBtn.disabled=false;
-
-    }else{
-
-        checkInBtn.disabled=true;
-        checkOutBtn.disabled=true;
-
-    }
+    // Check account status every 30 seconds.
+    // If the admin disables the account while the employee
+    // dashboard is open, the employee is logged out.
+    setInterval(
+        verifyEmployeeAccount,
+        30000
+    );
 
 }
 
-document.getElementById("logoutBtn").onclick = function () {
-
-  
-
-    sessionStorage.clear();
-
-    location.href = "employeeLogin.html";
-
-};
-const checkInBtn = document.getElementById("checkInBtn");
-
-checkInBtn.onclick = async () => {
-
-    // Verify Office GPS
-    const gps = await verifyOfficeLocation();
-
-    if (!gps) return;
-
-    const now = new Date();
-
-    const today = now.toISOString().split("T")[0];
-
-    await set(ref(db, "attendance/" + empID + "/" + today), {
-
-        checkIn: now.toLocaleTimeString(),
-
-        checkInTimestamp: now.getTime(),
-
-        checkOut: "",
-
-        checkOutTimestamp: 0,
-
-        workingHours: "",
-
-        status: "Present",
-
-        // GPS Details
-        latitude: gps.latitude,
-
-        longitude: gps.longitude,
-
-        distance: Number(gps.distance.toFixed(2)),
-
-        gpsVerified: true
-
-    });
-
-    alert("Checked In Successfully");
-
-    loadTodayAttendance();
-
-};
-const checkOutBtn = document.getElementById("checkOutBtn");
-
-checkOutBtn.onclick = async () => {
-
-    // Verify Office GPS
-    const gps = await verifyOfficeLocation();
-
-    if (!gps) return;
-
-    const today = new Date().toISOString().split("T")[0];
-
-    const snapshot = await get(
-        ref(db, "attendance/" + empID + "/" + today)
-    );
-
-    if (!snapshot.exists()) {
-
-        alert("No Check-In Record Found.");
-
-        return;
-
-    }
-
-    const data = snapshot.val();
-
-    const now = Date.now();
-
-    const diff = now - data.checkInTimestamp;
-
-    const h = Math.floor(diff / 3600000);
-
-    const m = Math.floor((diff % 3600000) / 60000);
-
-    const s = Math.floor((diff % 60000) / 1000);
-
-    const workingHours =
-        String(h).padStart(2, "0") + ":" +
-        String(m).padStart(2, "0") + ":" +
-        String(s).padStart(2, "0");
-
-    await update(ref(db, "attendance/" + empID + "/" + today), {
-
-        checkOut: new Date().toLocaleTimeString(),
-
-        checkOutTimestamp: now,
-
-        workingHours: workingHours,
-
-        // GPS Details
-        checkOutLatitude: gps.latitude,
-
-        checkOutLongitude: gps.longitude,
-
-        checkOutDistance: Number(gps.distance.toFixed(2))
-
-    });
-
-    alert("Checked Out Successfully");
-
-    loadTodayAttendance();
-
-};
-loadAttendanceHistory();
+initializeDashboard();
