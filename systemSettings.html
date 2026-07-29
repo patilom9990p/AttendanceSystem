@@ -3,14 +3,25 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
 
-<title>Employee Dashboard</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<link rel="icon" type="image/png" href="images/logo.png">
+    <title>System Settings</title>
 
-<link rel="stylesheet" href="css/style.css">
+    <link
+        rel="icon"
+        type="image/png"
+        href="images/logo.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
@@ -22,13 +33,21 @@
 
     <div class="header-content">
 
-        <img src="images/logo.png" class="logo">
+        <img
+            src="images/logo.png"
+            class="logo"
+            alt="WaveNxD Logo"
+        >
 
         <div class="company-text">
 
-            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+            <h1>
+                WaveNxD Technologies Pvt. Ltd.
+            </h1>
 
-            <p>Office Attendance Management System</p>
+            <p>
+                Office Attendance Management System
+            </p>
 
         </div>
 
@@ -38,59 +57,103 @@
 
 <div class="container">
 
-<h2>⚙️ System Settings</h2>
+    <h2>⚙️ System Settings</h2>
 
-<hr>
+    <hr>
 
-<button id="resetAttendanceBtn">
+    <!-- Disable Employee Account -->
 
-🟡 Reset Attendance
+    <button
+        type="button"
+        id="disableEmployeeBtn"
+        onclick="location.href='disableEmployee.html'"
+    >
+        🔒 Disable Employee Account
+    </button>
 
-</button>
+    <p>
+        Generates a complete PDF record and disables an employee
+        or intern who has left the company.
+    </p>
 
-<p>Deletes all attendance records only.</p>
+    <hr>
 
-<hr>
+    <!-- Reset Attendance -->
 
-<button id="resetPasswordBtn">
+    <button
+        type="button"
+        id="resetAttendanceBtn"
+    >
+        🟡 Reset Attendance
+    </button>
 
-🟠 Reset All Passwords
+    <p>
+        Deletes all attendance records only.
+    </p>
 
-</button>
+    <hr>
 
-<p>Sets every employee/intern password to <b>123456</b>.</p>
+    <!-- Reset All Passwords -->
 
-<hr>
+    <button
+        type="button"
+        id="resetPasswordBtn"
+    >
+        🟠 Reset All Passwords
+    </button>
 
-<button id="enableAllBtn">
+    <p>
+        Sets every employee and intern password to
+        <strong>123456</strong>.
+    </p>
 
-🟢 Enable All Accounts
+    <hr>
 
-</button>
+    <!-- Enable All Accounts -->
 
-<p>Activates every employee and intern account.</p>
+    <button
+        type="button"
+        id="enableAllBtn"
+    >
+        🟢 Enable All Accounts
+    </button>
 
-<hr>
+    <p>
+        Activates every employee and intern account.
+    </p>
 
-<button id="factoryResetBtn">
+    <hr>
 
-🔴 Factory Reset
+    <!-- Factory Reset -->
 
-</button>
+    <button
+        type="button"
+        id="factoryResetBtn"
+    >
+        🔴 Factory Reset
+    </button>
 
-<p>Deletes all employees, interns and attendance.</p>
+    <p>
+        Deletes all employees, interns, attendance,
+        leave requests and related records.
+    </p>
 
-<hr>
+    <hr>
 
-<button onclick="location.href='adminDashboard.html'">
-
-⬅ Back
-
-</button>
+    <button
+        type="button"
+        onclick="location.href='adminDashboard.html'"
+    >
+        ⬅ Back
+    </button>
 
 </div>
 
-<script type="module" src="js/systemSettings.js"></script>
+<script
+    type="module"
+    src="js/systemSettings.js"
+></script>
 
 </body>
+
 </html>
