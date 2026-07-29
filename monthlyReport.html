@@ -3,14 +3,25 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
 
-<title>Employee Dashboard</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<link rel="icon" type="image/png" href="images/logo.png">
+    <title>Monthly Attendance Report</title>
 
-<link rel="stylesheet" href="css/style.css">
+    <link
+        rel="icon"
+        type="image/png"
+        href="images/logo.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
@@ -22,13 +33,21 @@
 
     <div class="header-content">
 
-        <img src="images/logo.png" class="logo">
+        <img
+            src="images/logo.png"
+            class="logo"
+            alt="Company Logo"
+        >
 
         <div class="company-text">
 
-            <h1>WaveNxD Technologies Pvt. Ltd.</h1>
+            <h1>
+                WaveNxD Technologies Pvt. Ltd.
+            </h1>
 
-            <p>Office Attendance Management System</p>
+            <p>
+                Office Attendance Management System
+            </p>
 
         </div>
 
@@ -38,28 +57,70 @@
 
 <div class="container">
 
-    <h2>📊 Monthly Attendance Report</h2>
+    <h2>
+        📊 Monthly Attendance Report
+    </h2>
 
-    <br>
+    <hr>
 
-    <label>Select Month</label>
+    <!-- Employee Details -->
+
+    <div id="employeeDetails">
+
+        <h3 id="employeeName">
+            Name : --
+        </h3>
+
+        <h3 id="employeeId">
+            Employee ID : --
+        </h3>
+
+        <h3 id="employeeType">
+            Type : --
+        </h3>
+
+        <h3 id="employeeCompany">
+            Company : --
+        </h3>
+
+    </div>
+
+    <hr>
+
+    <label for="monthPicker">
+        <strong>Select Month</strong>
+    </label>
 
     <br><br>
 
-    <input type="month" id="monthPicker">
+    <input
+        type="month"
+        id="monthPicker"
+    >
 
     <br><br>
 
-    <button id="loadBtn">
-
+    <button
+        type="button"
+        id="loadBtn"
+    >
         View Report
+    </button>
 
+    <button
+        type="button"
+        id="pdfBtn"
+        disabled
+    >
+        📄 Generate PDF
     </button>
 
     <hr>
 
+    <!-- Monthly Summary -->
+
     <h3 id="workingDays">
-        Total Records : 0
+        Total Days : 0
     </h3>
 
     <h3 id="presentDays">
@@ -68,6 +129,10 @@
 
     <h3 id="absentDays">
         Absent : 0
+    </h3>
+
+    <h3 id="leaveDays">
+        Leave : 0
     </h3>
 
     <h3 id="attendancePercent">
@@ -80,15 +145,80 @@
 
     <hr>
 
-    <button onclick="location.href='employeeDashboard.html'">
+    <!-- Daily Attendance Table -->
 
+    <h3>
+        Daily Attendance Details
+    </h3>
+
+    <div style="overflow-x:auto;">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Date</th>
+
+                    <th>Day</th>
+
+                    <th>Status</th>
+
+                    <th>Check In</th>
+
+                    <th>Check Out</th>
+
+                    <th>Working Hours</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="reportTableBody">
+
+                <tr>
+
+                    <td colspan="6">
+                        Select a month and click View Report.
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <hr>
+
+    <button
+        type="button"
+        onclick="location.href='employeeDashboard.html'"
+    >
         ⬅ Back
-
     </button>
 
 </div>
 
-<script type="module" src="js/monthlyReport.js"></script>
+<!-- jsPDF Library -->
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+></script>
+
+<!-- jsPDF AutoTable Library -->
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"
+></script>
+
+<script
+    type="module"
+    src="js/monthlyReport.js"
+></script>
+
 <footer class="footer">
 
     <p>
@@ -98,6 +228,7 @@
     </p>
 
 </footer>
+
 </body>
 
 </html>
