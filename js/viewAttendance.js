@@ -5,6 +5,20 @@ import {
     remove
 } from "./firebase.js";
 
+// ==============================
+// CHECK ADMIN SESSION
+// ==============================
+
+if (
+    sessionStorage.getItem("adminLoggedIn") !== "true"
+) {
+    window.location.href = "adminLogin.html";
+}
+
+// ==============================
+// HTML ELEMENTS
+// ==============================
+
 const tableBody =
     document.getElementById("tableBody");
 
@@ -156,6 +170,14 @@ async function loadAttendance() {
             const emp =
                 employees[empID];
 
+            // ==========================
+            // HIDE DISABLED EMPLOYEES
+            // ==========================
+
+            if (emp.active === false) {
+                continue;
+            }
+
             const employeeCompany =
                 emp.company || "WaveNxD";
 
@@ -167,9 +189,7 @@ async function loadAttendance() {
                 selectedCompany !== "All" &&
                 employeeCompany !== selectedCompany
             ) {
-
                 continue;
-
             }
 
             visibleEmployeeCount++;
@@ -269,8 +289,8 @@ async function loadAttendance() {
 
             const companyMessage =
                 selectedCompany === "All"
-                    ? "No Employees Found"
-                    : "No employees found for " +
+                    ? "No active employees found"
+                    : "No active employees found for " +
                       selectedCompany;
 
             tableBody.innerHTML = `
@@ -330,11 +350,14 @@ window.deleteEmployee =
 async function (empID) {
 
     const confirmDelete = confirm(
-        "Are you sure you want to delete " +
+        "Are you sure you want to permanently delete " +
         empID +
         "?\n\n" +
-        "Employee data, attendance, leave requests " +
-        "and GPS attempt records will be deleted."
+        "Employee data, attendance, leave requests, " +
+        "disabled employee records and GPS attempts " +
+        "will be deleted.\n\n" +
+        "Use Disable Employee Account instead when an " +
+        "employee leaves the company."
     );
 
     if (!confirmDelete) {
@@ -363,6 +386,14 @@ async function (empID) {
             ref(
                 db,
                 "unauthorizedAttempts/" + empID
+            )
+        );
+
+        // Delete disabled employee archive reference
+        await remove(
+            ref(
+                db,
+                "disabledEmployees/" + empID
             )
         );
 
